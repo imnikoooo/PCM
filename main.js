@@ -1,8 +1,4 @@
-/**
- * Main Electron Process for Power Cost Monitor.
- * Orchestrates Floating HUD Overlay, Dashboard window, Onboarding screen,
- * System Tray, Game Auto-Tracker, Global Hotkeys, and real-time hardware telemetry sampling.
- */
+
 
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, screen, globalShortcut, shell } = require('electron');
 const path = require('path');
