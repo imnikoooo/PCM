@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Cost Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .split-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hero-energy-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .quick-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-mint);
+            color: #FFFFFF;
+        }
+
+        /* Changelog & Updates Styles */
+        .changelog-card {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .changelog-card.current {
+            border-color: rgba(16, 185, 129, 0.45);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.09) 0%, rgba(15, 23, 42, 0.8) 100%);
+        }
+        .changelog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .version-badge {
+            font-size: 13px;
+            font-weight: 800;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .version-tag {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .version-tag.current {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .version-tag.past {
+            background: rgba(255, 255, 255, 0.06);
+            color: #94A3B8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .changelog-date {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .changelog-list {
+            margin: 0;
+            padding-left: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: #CBD5E1;
+            line-height: 1.45;
+        }
+        .changelog-list li strong {
+            color: #F8FAFC;
+        }
+
+        /* Game Sessions Styles */
+        .game-session-item {
+            background: rgba(18, 25, 40, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            transition: all 0.15s ease;
+        }
+        .game-session-item:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(24, 34, 54, 0.85);
+        }
+        .game-session-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .game-session-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #F8FAFC;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .game-session-date {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .game-session-stats {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: #CBD5E1;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="window-shell">
+        <!-- Minimalist Title Bar (No minus, no X cross as requested) -->
+        <div class="titlebar drag-region">
+            <div class="title-identity">
+                <span class="title-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </span>
+                <span class="title-text">Power Cost Monitor</span>
+                <span class="uptime-badge tnum" id="uptimeBadge">⏱ 00:00:00</span>
+            </div>
+            <!-- Clean Header Status & Language Toggle -->
+            <div class="no-drag" style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="quick-btn" id="btnLangToggle" title="Switch Language / Сменить язык" style="font-weight: 700; padding: 2px 9px;">🌐 EN</button>
+                <span class="status-toast" id="statusToast">✓ Saved</span>
+            </div>
+        </div>
+
+        <!-- Segmented Tab Switcher -->
+        <div class="segmented-nav no-drag">
+            <button class="nav-tab active" id="tabBtnTelemetry">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <span id="tabLabelTelemetry">Telemetry</span>
+            </button>
+            <button class="nav-tab" id="tabBtnGames">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="8" cy="12" r="1.5"></circle><line x1="14" y1="10" x2="18" y2="10"></line><line x1="16" y1="8" x2="16" y2="12"></line></svg>
+                <span id="tabLabelGames">Game Tracker</span>
+            </button>
+            <button class="nav-tab" id="tabBtnSettings">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span id="tabLabelSettings">Settings</span>
+            </button>
+            <button class="nav-tab" id="tabBtnChangelog">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span id="tabLabelChangelog">Changelog</span>
+            </button>
+            <button class="nav-tab" id="tabBtnAbout">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <span id="tabLabelAbout">About</span>
+            </button>
+        </div>
+
+        <!-- Scrollable Content View -->
+        <div class="view-content no-drag">
+            <!-- TAB 1: TELEMETRY -->
+            <div id="viewTelemetry" style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Hero Card -->
+                <div class="hero-card">
+                    <span class="hero-tag" id="tagHeroTotal">TOTAL AC WALL POWER CONSUMPTION</span>
+                    <div class="hero-grid">
+                        <div class="hero-metric">
+                            <span class="hero-value-main tnum" id="heroWatts">0 W</span>
+                            <span class="hero-subtag" id="heroSubtagPower">Active Power</span>
+                        </div>
+                        <div class="hero-metric">
+                            <span class="hero-value-sub cyan tnum" id="heroRate">$0.00/hr</span>
+                            <span class="hero-subtag" id="heroSubtagRate">Hourly Rate</span>
+                        </div>
+                        <div class="hero-metric">
+                            <span class="hero-value-sub purple tnum" id="heroAvgRate">$0.00/hr</span>
+                            <span class="hero-subtag" id="heroSubtagAvg">Avg Rate</span>
+                        </div>
+                        <div class="hero-metric">
+                            <span class="hero-value-sub white tnum" id="heroSpent">$0.00</span>
+                            <span class="hero-subtag" id="heroSubtagSpent">Session Cost</span>
+                        </div>
+                    </div>
+                    <div class="hero-loadbar">
+                        <div class="hero-loadbar-fill" id="heroBar" style="width: 0%;"></div>
+                    </div>
+                    <div class="hero-energy-row">
+                        <span class="hero-energy tnum" id="heroEnergy">Session energy consumption: 0.0000 kWh</span>
+                        <span class="hero-energy tnum" id="heroAvgWatts" style="color: #A78BFA; font-weight: 700;">Avg Power: 0.0 W</span>
+                    </div>
+                </div>
+
+                <span class="settings-tag" id="tagComponentBreakdown">POWER BREAKDOWN BY COMPONENT</span>
+
+                <!-- GPU Card -->
+                <div class="component-card">
+                    <div class="comp-header">
+                        <div class="comp-identity">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                            <span class="comp-title" id="compTitleGpu">NVIDIA Graphics Card</span>
+                        </div>
+                        <span class="comp-model" id="gpuModel">RTX Detected</span>
+                    </div>
+                    <div class="comp-numbers">
+                        <div>
+                            <span class="comp-watts mint tnum" id="gpuWatts">0.0 W</span>
+                            <span class="comp-pct tnum" id="gpuPct">(0%)</span>
+                        </div>
+                        <span class="comp-cost tnum" id="gpuCost">$0.000/hr</span>
+                    </div>
+                    <div class="capsule-bar">
+                        <div class="capsule-fill mint" id="gpuBar" style="width: 0%;"></div>
+                    </div>
+                    <span class="comp-details" id="gpuDetails">Load: 0% • Temp: 0°C</span>
+                </div>
+
+                <!-- CPU Card -->
+                <div class="component-card">
+                    <div class="comp-header">
+                        <div class="comp-identity">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
+                            <span class="comp-title" id="compTitleCpu">CPU Processor</span>
+                        </div>
+                        <span class="comp-model" id="cpuModel">Multi-Core</span>
+                    </div>
+                    <div class="comp-numbers">
+                        <div>
+                            <span class="comp-watts cyan tnum" id="cpuWatts">0.0 W</span>
+                            <span class="comp-pct tnum" id="cpuPct">(0%)</span>
+                        </div>
+                        <span class="comp-cost tnum" id="cpuCost">$0.000/hr</span>
+                    </div>
+                    <div class="capsule-bar">
+                        <div class="capsule-fill cyan" id="cpuBar" style="width: 0%;"></div>
+                    </div>
+                    <span class="comp-details" id="cpuDetails">Load: 0% • TDP profile: 120W</span>
+                </div>
+
+                <!-- Monitor Card (Hz & Scaler) -->
+                <div class="component-card">
+                    <div class="comp-header">
+                        <div class="comp-identity">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            <span class="comp-title" id="compTitleMonitor">Display & Refresh Rate (Hz)</span>
+                        </div>
+                        <span class="comp-model" id="monitorModel">144 Hz Gaming</span>
+                    </div>
+                    <div class="comp-numbers">
+                        <div>
+                            <span class="comp-watts tnum" style="color: #F59E0B;" id="monitorWatts">0.0 W</span>
+                            <span class="comp-pct tnum" id="monitorPct">(0%)</span>
+                        </div>
+                        <span class="comp-cost tnum" id="monitorCost">$0.000/hr</span>
+                    </div>
+                    <div class="capsule-bar">
+                        <div class="capsule-fill" style="background: linear-gradient(90deg, #D97706, #F59E0B);" id="monitorBar" style="width: 0%;"></div>
+                    </div>
+                    <span class="comp-details" id="monitorDetails">Frequency: 144 Hz • Scaler, T-Con and backlight calculations</span>
+                </div>
+
+                <!-- Peripherals Card (RAM, Storage, Fans, Pump, RGB) -->
+                <div class="component-card">
+                    <div class="comp-header">
+                        <div class="comp-identity">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2.5"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <span class="comp-title" id="compTitlePeriph">RAM, SSDs, Fans, Pump, RGB</span>
+                        </div>
+                        <span class="comp-model" id="periphModel">RAM + SSD + Fans + Mobo</span>
+                    </div>
+                    <div class="comp-numbers">
+                        <div>
+                            <span class="comp-watts purple tnum" id="periphWatts">0.0 W</span>
+                            <span class="comp-pct tnum" id="periphPct">(0%)</span>
+                        </div>
+                        <span class="comp-cost tnum" id="periphCost">$0.000/hr</span>
+                    </div>
+                    <div class="capsule-bar">
+                        <div class="capsule-fill purple" id="periphBar" style="width: 0%;"></div>
+                    </div>
+                    <span class="comp-details" id="periphDetails">RAM: ~9W • NVMe: ~8W • Fans/Cooler: ~20W • RGB: ~6W • Mobo: 15W</span>
+                </div>
+
+                <!-- PSU Efficiency Card -->
+                <div class="component-card">
+                    <div class="comp-header">
+                        <div class="comp-identity">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                            <span class="comp-title" id="compTitlePsu">Power Supply (Dynamic 80 PLUS Efficiency)</span>
+                        </div>
+                        <span class="comp-model" id="psuModel">850W Gold</span>
+                    </div>
+                    <div class="comp-numbers">
+                        <div>
+                            <span class="comp-watts tnum" style="color: #EC4899;" id="psuEffVal">90.0% Efficiency</span>
+                        </div>
+                        <span class="comp-cost tnum" id="psuLoss">Thermal Loss: 0.0 W</span>
+                    </div>
+                    <div class="capsule-bar">
+                        <div class="capsule-fill" style="background: linear-gradient(90deg, #DB2777, #F472B6);" id="psuBar" style="width: 90%;"></div>
+                    </div>
+                    <span class="comp-details" id="psuDetails">Internal DC: 0.0 W ➔ AC Wall draw: 0.0 W (Efficiency varies with load curve)</span>
+                </div>
+            </div>
+
+            <!-- TAB 2: GAME TRACKER -->
+            <div id="viewGames" style="display: none; flex-direction: column; gap: 14px;">
+                <!-- Active Game Hero Card -->
+                <div class="hero-card" id="gameHeroCard" style="border-color: rgba(56, 189, 248, 0.45); background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.9) 100%);">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="pulse-dot" id="gamePulseDot" style="background: #38BDF8; box-shadow: 0 0 8px #38BDF8;"></div>
+                            <span class="hero-tag" id="gameHeroTag" style="color: #38BDF8; margin-bottom: 0;">GAME AUTO-TRACKING: WAITING FOR GAME...</span>
+                        </div>
+                        <span class="uptime-badge tnum" id="gameDurationBadge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8; border-color: rgba(56, 189, 248, 0.3);">⏱ 00:00:00</span>
+                    </div>
+
+                    <!-- If Game Active -->
+                    <div id="gameActiveBody" style="display: none; margin-top: 10px;">
+                        <div style="font-size: 19px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #38BDF8;">🎮</span>
+                            <span id="activeGameTitle">Game Name</span>
+                            <span class="version-tag current" id="gameActiveBadge" style="background: rgba(56, 189, 248, 0.2); color: #38BDF8; border-color: rgba(56, 189, 248, 0.4);">Active</span>
+                        </div>
+
+                        <div class="hero-grid">
+                            <div class="hero-metric">
+                                <span class="hero-value-main tnum" id="gameLiveWatts" style="color: #38BDF8;">0 W</span>
+                                <span class="hero-subtag" id="gameSubtagWatts">Total PC Power</span>
+                            </div>
+                            <div class="hero-metric">
+                                <span class="hero-value-sub cyan tnum" id="gameLiveSpent">$0.00</span>
+                                <span class="hero-subtag" id="gameSubtagSpent">Spent on Game</span>
+                            </div>
+                            <div class="hero-metric">
+                                <span class="hero-value-sub purple tnum" id="gameLiveGpu">0 W (0%)</span>
+                                <span class="hero-subtag" id="gameSubtagGpu">Graphics (GPU)</span>
+                            </div>
+                            <div class="hero-metric">
+                                <span class="hero-value-sub white tnum" id="gameLiveAvg">0 W</span>
+                                <span class="hero-subtag" id="gameSubtagAvg">Average Power</span>
+                            </div>
+                        </div>
+
+                        <div class="hero-energy-row" style="margin-top: 10px;">
+                            <span class="hero-energy tnum" id="gameLiveKwh">Energy used in game: 0.0000 kWh</span>
+                            <span class="hero-energy tnum" id="gameLiveTemp" style="color: #A78BFA;">GPU Temp: --°C</span>
+                        </div>
+                    </div>
+
+                    <!-- If Idle -->
+                    <div id="gameIdleBody" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #F8FAFC;" id="gameIdleTitle">🎮 No game is currently running</div>
+                        <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;" id="gameIdleDesc">
+                            The system automatically detects when you launch a 3D game (Steam, Epic Games, Ubisoft Connect, Riot, Lesta, Roblox, EA, Battle.net, etc.) and continuously calculates active GPU draw, system power, and electricity cost per session.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gaming All-Time Summary Card -->
+                <div class="component-card">
+                    <div class="comp-header">
+                        <div class="comp-identity">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <span class="comp-title" id="gameSummaryTitle">ALL-TIME GAMING SESSION SUMMARY</span>
+                        </div>
+                        <span class="comp-model" id="gameTotalSessionsCount">0 sessions</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px;">
+                        <div class="hero-metric">
+                            <span class="hero-value-sub white tnum" id="statTotalGameHours" style="font-size: 16px;">0h 00m</span>
+                            <span class="hero-subtag" id="statSubtagHours">Total Time</span>
+                        </div>
+                        <div class="hero-metric">
+                            <span class="hero-value-sub cyan tnum" id="statTotalGameCost" style="font-size: 16px;">$0.00</span>
+                            <span class="hero-subtag" id="statSubtagCost">Total Spent</span>
+                        </div>
+                        <div class="hero-metric">
+                            <span class="hero-value-sub purple tnum" id="statTotalGameKwh" style="font-size: 16px;">0.00 kWh</span>
+                            <span class="hero-subtag" id="statSubtagKwh">Total Energy</span>
+                        </div>
+                        <div class="hero-metric">
+                            <span class="hero-value-sub tnum" id="statAvgGameWatts" style="font-size: 16px; color: #10B981;">0 W</span>
+                            <span class="hero-subtag" id="statSubtagWatts">Avg Gaming Watts</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                    <span class="settings-tag" style="margin-bottom: 0;" id="gameHistoryTag">COMPLETED GAMING SESSIONS HISTORY</span>
+                    <button type="button" class="quick-btn" id="btnClearGameHistory" style="color: #F87171; border-color: rgba(239, 68, 68, 0.25);">
+                        <span id="btnClearGameHistoryLabel">🗑️ Clear History</span>
+                    </button>
+                </div>
+
+                <!-- Sessions List Container -->
+                <div id="gameSessionsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+
+            <!-- TAB 3: SETTINGS & HARDWARE BUILDER -->
+            <div id="viewSettings" style="display: none; flex-direction: column; gap: 14px;">
+                <!-- Language Selection Card -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagInterfaceLang">APPLICATION LANGUAGE / ЯЗЫК ПРИЛОЖЕНИЯ</span>
+                    <select class="input-control" id="selectLanguage">
+                        <option value="en">English (Default)</option>
+                        <option value="ru">Русский (Russian)</option>
+                        <option value="es">Español (Spanish)</option>
+                    </select>
+                </div>
+
+                <!-- Setup Wizard Re-run Card -->
+                <div class="settings-section-card" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(56, 189, 248, 0.35);">
+                    <div>
+                        <span class="settings-tag" style="color: #38BDF8; margin-bottom: 2px;" id="tagWizardHeader">SETUP WIZARD</span>
+                        <div style="font-size: 11.5px; color: var(--text-secondary);" id="tagWizardSub">Step-by-step welcome setup wizard (HUD mode, electricity tariff, and CPU cooling type)</div>
+                    </div>
+                    <button type="button" class="quick-btn" id="btnLaunchWizard" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38BDF8; font-weight: 700; padding: 6px 14px; font-size: 12px;">
+                        <span id="btnLaunchWizardLabel">🧙 Run Setup Wizard</span>
+                    </button>
+                </div>
+
+                <!-- Regional Presets Card -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagRegionalPresets">REGIONAL ELECTRICITY TARIFF PRESETS</span>
+                    <select class="input-control" id="selectPresets">
+                        <option value="" id="optPresetsDefault">Select regional preset tariff...</option>
+                        <option value="US_AVG">🇺🇸 US National Average (EIA) — $0.183 / kWh (18.3¢)</option>
+                        <option value="NYC_CONED">🗽 New York City (ConEd Blended) — $0.338 / kWh (33.8¢)</option>
+                        <option value="US_CA">☀️ California (PG&E / SCE) — $0.336 / kWh (33.6¢)</option>
+                        <option value="NYC_STATEN">🏝️ Staten Island / NY State Base — $0.220 / kWh (22.0¢)</option>
+                        <option value="US_TX">🤠 Texas (ERCOT Competitive) — $0.159 / kWh (15.9¢)</option>
+                        <option value="US_FL">🌴 Florida (FPL) — $0.150 / kWh (15.0¢)</option>
+                        <option value="US_WA">🌲 Washington State / PNW — $0.115 / kWh (11.5¢)</option>
+                        <option value="US_HI">🌺 Hawaii (HECO) — $0.440 / kWh (44.0¢)</option>
+                        <option value="ES_MAD">🇪🇸 Spain / Madrid (PVPC Regulado) — €0.198 / kWh</option>
+                        <option value="UK_LON">🇬🇧 United Kingdom (Ofgem Cap) — £0.265 / kWh</option>
+                        <option value="EU_GER">🇪🇺 European Union / Germany (Strom) — €0.395 / kWh</option>
+                        <option value="RU_MSK">🇷🇺 Moscow & Oblast (Mosenergosbyt) — 6.50 ₽ / kWh</option>
+                        <option value="RU_REG">🇷🇺 Russian Regions / Siberia — 2.20 ₽ / kWh</option>
+                        <option value="KZ_ALM">🇰🇿 Kazakhstan (Almaty / Astana) — 28.00 ₸ / kWh</option>
+                    </select>
+                </div>
+
+                <!-- Currency & Tariff -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagTariffHeader">TARIFF & RATE CALCULATION INTERVAL</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" id="labelCurSym">Currency Symbol</label>
+                            <input type="text" class="input-control" id="inputCurrency" value="$">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelTariff">Tariff (per 1 kWh)</label>
+                            <input type="number" step="0.01" class="input-control" id="inputTariff" value="0.28">
+                        </div>
+                        <div class="form-group full">
+                            <label class="form-label" id="labelRateInterval">Cost calculation interval (minutes) — RATE</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" min="1" max="1440" step="1" class="input-control" id="inputRateMinutes" value="60" style="width: 140px;">
+                                <div style="display: flex; gap: 6px;">
+                                    <button type="button" class="quick-btn" onclick="setRateQuick(15)" id="btnRate15">15 min</button>
+                                    <button type="button" class="quick-btn" onclick="setRateQuick(30)" id="btnRate30">30 min</button>
+                                    <button type="button" class="quick-btn" onclick="setRateQuick(60)" id="btnRate60">1 hr (60m)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HUD Preferences -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagHudHeader">FLOATING HUD OVERLAY BEHAVIOR & APPEARANCE</span>
+                    <div class="form-group">
+                        <label class="form-label" id="labelHudMode">HUD Widget Form Factor</label>
+                        <select class="input-control" id="selectHudMode">
+                            <option value="normal" id="optHudNormal">Standard Pill (Full — Watts, Rate, Session)</option>
+                            <option value="mini" id="optHudMini">Mini Cube (Compact — Watts & Session only)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 6px;">
+                        <label class="form-label" id="labelHudInterval">HUD Telemetry Update Interval</label>
+                        <select class="input-control" id="selectHudInterval">
+                            <option value="1" id="optHudInt1">1 sec (Highest precision)</option>
+                            <option value="2" id="optHudInt2">2 sec (Recommended)</option>
+                            <option value="5" id="optHudInt5">5 sec (Balanced)</option>
+                            <option value="10" id="optHudInt10">10 sec (Power saving)</option>
+                        </select>
+                    </div>
+
+                    <label class="form-label" style="margin-top: 8px;" id="labelHudMetricsTitle">Visible metrics in Full HUD mode:</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 2px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="checkHudPower" checked>
+                            <span id="labelCheckHudPower">Current Power (POWER)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="checkHudRate" checked>
+                            <span id="labelCheckHudRate">Interval Rate (RATE)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="checkHudAvg">
+                            <span id="labelCheckHudAvg">Average Rate (AVG/HR)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="checkHudSession" checked>
+                            <span id="labelCheckHudSession">Session Total (SESSION)</span>
+                        </label>
+                    </div>
+
+                    <label class="checkbox-label" style="margin-top: 10px;">
+                        <input type="checkbox" id="checkAlwaysOnTop" checked>
+                        <span id="labelCheckAlwaysOnTop">Overlay on top of all windows and games (DirectX/Vulkan Fullscreen Overlay)</span>
+                    </label>
+                    <div style="margin-top: 4px; margin-bottom: 2px; padding: 6px 12px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 8px; font-size: 11px; color: #BAE6FD; line-height: 1.4;" id="tipFullscreenBox">
+                        💡 <strong>Gaming Tip:</strong> If an overlay is hidden in a game (e.g. Watch Dogs 2), change display mode in the game graphic settings to <em>Borderless / Windowed Fullscreen</em>. Game FPS will be identical and the HUD stays reliably on top!
+                    </div>
+                    <label class="checkbox-label" style="margin-top: 8px;">
+                        <input type="checkbox" id="checkClickThrough">
+                        <span id="labelCheckClickThrough">🖱️ Click-Through Mode — mouse clicks pass right through overlay into game (Hotkey: Ctrl + Shift + X)</span>
+                    </label>
+                    <label class="checkbox-label" style="margin-top: 8px;">
+                        <input type="checkbox" id="checkSmoothNumbers">
+                        <span id="labelCheckSmooth">✨ Smooth numbers animation (Smooth easing between numeric values)</span>
+                    </label>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label class="form-label" style="margin-bottom: 0;" id="labelOpacityTitle">HUD Overlay Opacity:</label>
+                            <span id="labelHudOpacity" style="color: var(--accent-mint); font-weight: 700; font-size: 12px;">100%</span>
+                        </div>
+                        <input type="range" class="input-range" id="inputHudOpacity" min="20" max="100" value="100" step="5" style="width: 100%; accent-color: var(--accent-mint); margin-top: 6px; cursor: pointer;">
+                    </div>
+                </div>
+
+                <!-- System & Autostart Settings -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagSysHeader">SYSTEM SETTINGS & WINDOWS STARTUP</span>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="checkAutostart" checked>
+                            <span id="labelCheckAutostart">🚀 Start with Windows (Background launch with Above Normal CPU priority)</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="checkHudOnStartup" checked>
+                            <span id="labelCheckHudStartup">👁️ Show HUD overlay upon Windows startup (if off, monitors silently in tray)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Hardware Auto-Detection Banner -->
+                <div class="settings-section-card" style="border: 1px solid rgba(16, 185, 129, 0.4); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <div>
+                            <span class="settings-tag" style="color: #10B981; margin-bottom: 2px;" id="tagDetectHeader">AUTOMATIC PC HARDWARE DETECTION</span>
+                            <div style="font-size: 11.5px; color: var(--text-secondary);" id="descDetect">Detects CPU, GPU, RAM, storage, refresh rate, and PSU in 1 click</div>
+                        </div>
+                        <button type="button" class="quick-btn" id="btnAutoDetect" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFF; font-weight: 700; padding: 6px 14px; font-size: 12px; border: none;">
+                            <span id="btnAutoDetectLabel">🔍 Detect All Hardware</span>
+                        </button>
+                    </div>
+                    <div id="autoDetectSummary" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 11.5px; line-height: 1.5; color: #E2E8F0;"></div>
+                </div>
+
+                <!-- GPU Configuration & TDP -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagGpuHeader">GRAPHICS CARD & GPU</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" id="labelGpuName">Graphics Card Model</label>
+                            <input type="text" class="input-control" id="inputGpuName" placeholder="Auto-detected..." style="color: var(--accent-mint); font-weight: 600;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelGpuTdp">GPU TDP Rating (Watts)</label>
+                            <input type="number" class="input-control" id="inputGpuTdp" value="200">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitor Physics -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagMonitorHeader">MONITOR: REFRESH RATE & PANEL</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" id="labelMonHz">Refresh Rate (Hz)</label>
+                            <select class="input-control" id="selectMonitorHz">
+                                <option value="60">60 Hz (Standard Desktop)</option>
+                                <option value="75">75 Hz (Base)</option>
+                                <option value="120">120 Hz (Smooth)</option>
+                                <option value="144">144 Hz (Gaming Esports)</option>
+                                <option value="165">165 Hz (Fast IPS)</option>
+                                <option value="240">240 Hz (Ultra High Hz)</option>
+                                <option value="360">360 Hz (Pro Gaming)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelMonPreset">Display Type & Size</label>
+                            <select class="input-control" id="selectMonitorPreset">
+                                <option value="std_24" id="optMonStd24">Standard 24" FHD (22 W)</option>
+                                <option value="gaming_27_32" id="optMonGaming">Gaming 27"-32" 2K/4K (38 W)</option>
+                                <option value="ultrawide_oled" id="optMonUltrawide">Ultrawide / OLED 34"+ (58 W)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CPU & Cooling Physics -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagCpuHeader">PROCESSOR & COOLING</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" id="labelCpuTdp">CPU TDP Rating (Watts)</label>
+                            <input type="number" class="input-control" id="inputCpuTdp" value="120">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelCoolingType">CPU Cooling Type</label>
+                            <select class="input-control" id="selectCoolingType">
+                                <option value="aio" id="optCoolingAio">AIO Liquid Cooler with Pump (~10 W)</option>
+                                <option value="air" id="optCoolingAir">Air Tower Heatsink Cooler (~3 W)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelCaseFans">Case Fans Count (qty)</label>
+                            <input type="number" min="0" max="15" class="input-control" id="inputCaseFans" value="4">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelRgb">ARGB Lighting (Case / RAM)</label>
+                            <select class="input-control" id="selectRgb">
+                                <option value="true" id="optRgbOn">Enabled (+6 W)</option>
+                                <option value="false" id="optRgbOff">Disabled (0 W)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memory & Storage Physics -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagMemHeader">MEMORY & STORAGE</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" id="labelRamSticks">RAM Modules (DDR4 / DDR5)</label>
+                            <select class="input-control" id="selectRamSticks">
+                                <option value="1" id="optRam1">1 stick (4.5 W)</option>
+                                <option value="2" id="optRam2">2 sticks (9 W)</option>
+                                <option value="4" id="optRam4">4 sticks (18 W)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelNvme">NVMe M.2 SSD Drives</label>
+                            <input type="number" min="0" max="8" class="input-control" id="inputNvme" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelHdd">3.5" HDD Mechanical Drives</label>
+                            <input type="number" min="0" max="8" class="input-control" id="inputHdd" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Power Supply 80 PLUS Curve -->
+                <div class="settings-section-card">
+                    <span class="settings-tag" id="tagPsuHeader">POWER SUPPLY (DYNAMIC 80 PLUS EFFICIENCY)</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" id="labelPsuWatts">PSU Rated Power (Watts)</label>
+                            <input type="number" step="50" class="input-control" id="inputPsuWatts" value="850">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="labelPsuCert">80 PLUS Certification</label>
+                            <select class="input-control" id="selectPsuCert">
+                                <option value="bronze" id="optPsuBronze">80 PLUS Bronze (85% peak)</option>
+                                <option value="silver" id="optPsuSilver">80 PLUS Silver (88% peak)</option>
+                                <option value="gold" id="optPsuGold">80 PLUS Gold (90% peak)</option>
+                                <option value="platinum" id="optPsuPlatinum">80 PLUS Platinum (92% peak)</option>
+                                <option value="titanium" id="optPsuTitanium">80 PLUS Titanium (94% peak)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CHANGELOG & UPDATES -->
+            <div id="viewChangelog" style="display: none; flex-direction: column; gap: 14px;">
+                <span class="settings-tag" id="tagChangelogTitle">CHANGELOG</span>
+
+                <!-- Version 1.0.0 — First Public Release -->
+                <div class="changelog-card current">
+                    <div class="changelog-header">
+                        <div class="version-badge">
+                            <span id="changelogBadge">v1.0.0 — First Public Release</span>
+                            <span class="version-tag current" id="changelogTag">Latest</span>
+                        </div>
+                        <span class="changelog-date" id="changelogDate">2026</span>
+                    </div>
+                    <ul class="changelog-list" id="changelogList">
+                        <li>First public release on GitHub!</li>
+                        <li>Real-time PC electricity cost calculation & AC wall power simulation.</li>
+                        <li>Floating in-game HUD overlay with two display modes: Standard Pill and Mini Cube.</li>
+                        <li>Click-Through mode (<code>Ctrl + Shift + X</code>) so mouse clicks pass directly into games.</li>
+                        <li>Automatic 3D game tracking with session history, kWh, and GPU load logging.</li>
+                        <li>Physical hardware simulation: CPU dynamic load, GPU sensor/TDP, RAM, SSD, cooling, and 80 PLUS PSU curves.</li>
+                        <li>1-click hardware auto-detection via Windows CIM/WMI.</li>
+                        <li>Multi-currency and regional utility presets (US, EU, UK, RU, KZ, and custom rates).</li>
+                        <li>Trilingual support: English (default), Russian, and Spanish.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TAB 5: ABOUT -->
+            <div id="viewAbout" style="display: none; flex-direction: column; gap: 14px;">
+                <!-- App Identity Card -->
+                <div class="settings-section-card" style="align-items: center; text-align: center; padding: 22px 16px;">
+                    <div style="width: 52px; height: 52px; border-radius: 16px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                    </div>
+                    <div style="font-size: 19px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.3px;">Power Cost Monitor</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0 8px 0;">
+                        <span style="background: rgba(16, 185, 129, 0.2); color: #10B981; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.35);">v1.0.0</span>
+                        <span style="color: var(--text-muted); font-size: 11px;">•</span>
+                        <span style="color: var(--accent-cyan); font-size: 11px; font-weight: 700;">Public Release</span>
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 12.5px; max-width: 480px; line-height: 1.5;" id="aboutAppDesc">
+                        Real-time PC electricity cost and AC wall power draw monitor with an in-game HUD overlay for Windows.
+                    </div>
+                </div>
+
+                <!-- Links Section -->
+                <span class="settings-tag" id="tagAboutLinks">OFFICIAL LINKS & DOWNLOADS</span>
+
+                <!-- GitHub Card -->
+                <div class="settings-section-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #FFFFFF; font-size: 13px;" id="aboutGithubTitle">GitHub Repository</div>
+                            <div style="color: var(--text-muted); font-size: 11px;">github.com/imnikoooo/PCM</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="openExternalUrl('https://github.com/imnikoooo/PCM');" style="font-size: 12px; font-weight: 700; padding: 6px 12px; flex-shrink: 0;">
+                        <span id="btnAboutGithub">Open GitHub ↗</span>
+                    </button>
+                </div>
+
+                <!-- Download Card -->
+                <div class="settings-section-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.05);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(56, 189, 248, 0.16); border: 1px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #FFFFFF; font-size: 13px;" id="aboutDownloadTitle">Download & Releases</div>
+                            <div style="color: #38BDF8; font-size: 11px;" id="aboutDownloadSub">Get latest installer (.exe) on GitHub</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="openExternalUrl('https://github.com/imnikoooo/PCM/releases');" style="font-size: 12px; font-weight: 700; padding: 6px 14px; flex-shrink: 0;">
+                        <span id="btnAboutDownload">Download ↗</span>
+                    </button>
+                </div>
+
+                <!-- Website Card -->
+                <div class="settings-section-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(167, 139, 250, 0.14); border: 1px solid rgba(167, 139, 250, 0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #FFFFFF; font-size: 13px;" id="aboutWebsiteTitle">Author Website</div>
+                            <div style="color: var(--text-muted); font-size: 11px;">notniko.com</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="openExternalUrl('https://notniko.com');" style="font-size: 12px; font-weight: 700; padding: 6px 12px; flex-shrink: 0;">
+                        <span id="btnAboutWebsite">Visit Website ↗</span>
+                    </button>
+                </div>
+
+                <!-- Global Shortcuts Card -->
+                <span class="settings-tag" id="tagAboutShortcuts">GLOBAL KEYBOARD SHORTCUTS</span>
+                <div class="settings-section-card" style="padding: 12px 16px; gap: 9px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                        <span style="color: var(--text-secondary);" id="aboutScHud">Toggle HUD Overlay:</span>
+                        <code style="background: rgba(255,255,255,0.08); padding: 2px 7px; border-radius: 5px; color: #38BDF8; font-weight: 700;">Ctrl + Shift + P</code>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                        <span style="color: var(--text-secondary);" id="aboutScMode">Switch Mode (Pill / Cube):</span>
+                        <code style="background: rgba(255,255,255,0.08); padding: 2px 7px; border-radius: 5px; color: #38BDF8; font-weight: 700;">Ctrl + Shift + M</code>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                        <span style="color: var(--text-secondary);" id="aboutScClick">Click-Through Mode:</span>
+                        <code style="background: rgba(255,255,255,0.08); padding: 2px 7px; border-radius: 5px; color: #38BDF8; font-weight: 700;">Ctrl + Shift + X</code>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                        <span style="color: var(--text-secondary);" id="aboutScDash">Toggle Dashboard:</span>
+                        <code style="background: rgba(255,255,255,0.08); padding: 2px 7px; border-radius: 5px; color: #38BDF8; font-weight: 700;">Ctrl + Shift + D</code>
+                    </div>
+                </div>
+
+                <!-- Byline Footer -->
+                <div style="text-align: center; color: var(--text-muted); font-size: 11px; padding: 4px 0 10px 0;">
+                    MIT License • Crafted with care by <a href="#" onclick="openExternalUrl('https://notniko.com'); return false;" style="color: #10B981; text-decoration: none; font-weight: 700;">notniko</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Action Bar (With Apply Button and Countdown) -->
+        <div class="footer-bar no-drag">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary btn-danger" id="btnResetSession" title="Reset accumulated kilowatt-hours and session cost">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                    <span id="btnResetSessionLabel">Reset Session</span>
+                </button>
+                <button class="btn-secondary" id="btnToggleHud">
+                    <span id="btnToggleHudLabel">Toggle HUD</span>
+                </button>
+            </div>
+            <button class="btn-primary" id="btnApply" style="font-size: 13px; font-weight: 700; padding: 9px 16px; width: 132px; justify-content: center; text-align: center; white-space: nowrap; flex-shrink: 0;">
+                Apply
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = {};
+        let lastMetrics = null;
+        let lastSessions = [];
+        let countdownTimer = null;
+        let countdownSec = 3;
+
+        const DASHBOARD_I18N = {
+            en: {
+                langToggle: '🌐 EN',
+                tabTelemetry: 'Telemetry',
+                tabGames: 'Game Tracker',
+                tabSettings: 'Hardware & Tariffs',
+                tabChangelog: 'Changelog',
+                tagHeroTotal: 'TOTAL AC WALL POWER CONSUMPTION',
+                heroSubtagPower: 'Active Power',
+                heroSubtagRateHour: 'Cost per hour',
+                heroSubtagRateMin: (m) => `Cost per ${m} min`,
+                heroSubtagAvgHour: 'Average / hour',
+                heroSubtagAvgMin: (m) => `Average / ${m} min`,
+                heroSubtagSpent: 'Session Cost',
+                heroEnergyText: (kwh) => `Session energy consumption: ${kwh.toFixed(4)} kWh`,
+                heroAvgWattsText: (w) => `Avg Power: ${w.toFixed(1)} W`,
+                tagComponentBreakdown: 'POWER BREAKDOWN BY COMPONENT',
+                compTitleGpu: 'Graphics Card (GPU)',
+                compTitleCpu: 'Central Processor (CPU)',
+                compTitleMonitor: 'Display & Refresh Rate (Hz)',
+                compTitlePeriph: 'RAM, SSDs, Fans, Pump, RGB',
+                compTitlePsu: 'Power Supply (Dynamic 80 PLUS Efficiency)',
+                gpuDetailsEstimated: (load, tdp, pct) => `Load: ${load}%  •  TDP Profile (${tdp}W)  •  Share: ${pct}%`,
+                gpuDetailsDirect: (load, temp, pct) => `Load: ${load}%  •  Temp: ${temp}°C  •  Share: ${pct}%`,
+                cpuDetails: (load, tdp, pct) => `Load: ${load}%  •  TDP Profile: ${tdp}W  •  Share: ${pct}%`,
+                monitorDetails: (hz, pct) => `Refresh Rate: ${hz} Hz  •  Scaler, T-Con & Backlight (Share: ${pct}%)`,
+                periphDetails: (m) => `RAM: ~${m.ram_watts}W  •  NVMe/HDD: ~${m.storage_watts}W  •  Fans/Cooler: ~${m.cooling_watts}W  •  RGB: ~${m.rgb_watts}W  •  Mobo: ~${m.mobo_watts}W`,
+                psuLoss: (w) => `Heat loss: ${w.toFixed(1)} W`,
+                psuEff: (eff) => `${eff.toFixed(1)}% Efficiency`,
+                psuDetails: (dc, wall) => `Internal DC: ${dc.toFixed(1)} W ➔ AC Wall draw: ${wall.toFixed(1)} W (Efficiency varies with load curve)`,
+                gameHeroTagIdle: 'GAME AUTO-TRACKING: WAITING FOR GAME...',
+                gameHeroTagActive: (name) => `NOW PLAYING: ${name.toUpperCase()}`,
+                gameActiveBadge: 'Active',
+                gameSubtagWatts: 'Total PC Power',
+                gameSubtagSpent: 'Spent on Game',
+                gameSubtagGpu: 'Graphics (GPU)',
+                gameSubtagAvg: 'Average Power',
+                gameLiveKwhText: (kwh) => `Energy used in game: ${kwh.toFixed(4)} kWh`,
+                gameLiveGpuText: (temp, watts, load) => `GPU Temp: ${temp || '--'}°C (avg ${watts}W / ${load}% load)`,
+                gameIdleTitle: '🎮 No game is currently running',
+                gameIdleDesc: 'The system automatically detects when you launch a 3D game (Steam, Epic Games, Ubisoft Connect, Riot, Lesta, Roblox, EA, Battle.net, etc.) and continuously calculates active GPU draw, system power, and electricity cost per session.',
+                gameSummaryTitle: 'ALL-TIME GAMING SESSION SUMMARY',
+                statSubtagHours: 'Total Time',
+                statSubtagCost: 'Total Spent',
+                statSubtagKwh: 'Total Energy',
+                statSubtagWatts: 'Avg Gaming Watts',
+                gameHistoryTag: 'COMPLETED GAMING SESSIONS HISTORY',
+                btnClearGameHistoryLabel: '🗑️ Clear History',
+                emptyHistoryMsg: 'Game history is empty. Launch any game (Watch Dogs 2, Roblox, Cyberpunk, etc.) and it will be recorded here automatically!',
+                confirmClearHistory: 'Clear the entire recorded history of game sessions?',
+                toastHistoryCleared: '✓ Game history cleared',
+                toastSettingsSaved: '✓ Settings saved successfully',
+                toastSessionReset: '✓ Session metrics reset',
+                toastHardwareDetected: '✓ Hardware detected and saved',
+                autoDetecting: '⏳ Detecting...',
+                autoDetectBtnLabel: '🔍 Detect All Hardware',
+                autoDetectRepeatLabel: '🔍 Re-detect Hardware',
+                tagInterfaceLang: 'APPLICATION LANGUAGE / ЯЗЫК ПРИЛОЖЕНИЯ',
+                tagWizardHeader: 'SETUP WIZARD',
+                tagWizardSub: 'Step-by-step welcome setup wizard (HUD mode, electricity tariff, and CPU cooling type)',
+                btnLaunchWizardLabel: '🧙 Run Setup Wizard',
+                tagRegionalPresets: 'REGIONAL ELECTRICITY TARIFF PRESETS',
+                optPresetsDefault: 'Select regional preset tariff...',
+                tagTariffHeader: 'TARIFF & RATE CALCULATION INTERVAL',
+                labelCurSym: 'Currency Symbol',
+                labelTariff: 'Tariff (per 1 kWh)',
+                labelRateInterval: 'Cost calculation interval (minutes) — RATE',
+                btnRate15: '15 min',
+                btnRate30: '30 min',
+                btnRate60: '1 hr (60m)',
+                tagHudHeader: 'FLOATING HUD OVERLAY BEHAVIOR & APPEARANCE',
+                labelHudMode: 'HUD Widget Form Factor',
+                optHudNormal: 'Standard Pill (Full — Watts, Rate, Session)',
+                optHudMini: 'Mini Cube (Compact — Watts & Session only)',
+                labelHudInterval: 'HUD Telemetry Update Interval',
+                optHudInt1: '1 sec (Highest precision)',
+                optHudInt2: '2 sec (Recommended)',
+                optHudInt5: '5 sec (Balanced)',
+                optHudInt10: '10 sec (Power saving)',
+                labelHudMetricsTitle: 'Visible metrics in Full HUD mode:',
+                labelCheckHudPower: 'Current Power (POWER)',
+                labelCheckHudRate: 'Interval Rate (RATE)',
+                labelCheckHudAvg: 'Average Rate (AVG/HR)',
+                labelCheckHudSession: 'Session Total (SESSION)',
+                labelCheckAlwaysOnTop: 'Overlay on top of all windows and games (DirectX/Vulkan Fullscreen Overlay)',
+                tipFullscreenBox: '💡 <strong>Gaming Tip:</strong> If an overlay is hidden in a game (e.g. Watch Dogs 2), change display mode in the game graphic settings to <em>Borderless / Windowed Fullscreen</em>. Game FPS will be identical and the HUD stays reliably on top!',
+                labelCheckClickThrough: '🖱️ Click-Through Mode — mouse clicks pass right through overlay into game (Hotkey: Ctrl + Shift + X)',
+                labelCheckSmooth: '✨ Smooth numbers animation (Smooth easing between numeric values)',
+                labelOpacityTitle: 'HUD Overlay Opacity:',
+                tagSysHeader: 'SYSTEM SETTINGS & WINDOWS STARTUP',
+                labelCheckAutostart: '🚀 Start with Windows (Background launch with Above Normal CPU priority)',
+                labelCheckHudStartup: '👁️ Show HUD overlay upon Windows startup (if off, monitors silently in tray)',
+                tagDetectHeader: 'AUTOMATIC PC HARDWARE DETECTION',
+                descDetect: 'Detects CPU, GPU, RAM, storage, refresh rate, and PSU in 1 click',
+                tagGpuHeader: 'GRAPHICS CARD & GPU',
+                labelGpuName: 'Graphics Card Model',
+                labelGpuTdp: 'GPU TDP Rating (Watts)',
+                tagMonitorHeader: 'MONITOR: REFRESH RATE & PANEL',
+                labelMonHz: 'Refresh Rate (Hz)',
+                labelMonPreset: 'Display Type & Size',
+                optMonStd24: 'Standard 24" FHD (22 W)',
+                optMonGaming: 'Gaming 27"-32" 2K/4K (38 W)',
+                optMonUltrawide: 'Ultrawide / OLED 34"+ (58 W)',
+                tagCpuHeader: 'PROCESSOR & COOLING',
+                labelCpuTdp: 'CPU TDP Rating (Watts)',
+                labelCoolingType: 'CPU Cooling Type',
+                optCoolingAio: 'AIO Liquid Cooler with Pump (~10 W)',
+                optCoolingAir: 'Air Tower Heatsink Cooler (~3 W)',
+                labelCaseFans: 'Case Fans Count (qty)',
+                labelRgb: 'ARGB Lighting (Case / RAM)',
+                optRgbOn: 'Enabled (+6 W)',
+                optRgbOff: 'Disabled (0 W)',
+                tagMemHeader: 'MEMORY & STORAGE',
+                labelRamSticks: 'RAM Modules (DDR4 / DDR5)',
+                optRam1: '1 stick (4.5 W)',
+                optRam2: '2 sticks (9 W)',
+                optRam4: '4 sticks (18 W)',
+                labelNvme: 'NVMe M.2 SSD Drives',
+                labelHdd: '3.5" HDD Mechanical Drives',
+                tagPsuHeader: 'POWER SUPPLY (DYNAMIC 80 PLUS EFFICIENCY)',
+                labelPsuWatts: 'PSU Rated Power (Watts)',
+                labelPsuCert: '80 PLUS Certification',
+                optPsuBronze: '80 PLUS Bronze (85% peak)',
+                optPsuSilver: '80 PLUS Silver (88% peak)',
+                optPsuGold: '80 PLUS Gold (90% peak)',
+                optPsuPlatinum: '80 PLUS Platinum (92% peak)',
+                optPsuTitanium: '80 PLUS Titanium (94% peak)',
+                btnResetSessionLabel: 'Reset Session',
+                btnToggleHudLabel: 'Toggle HUD',
+                btnApply: 'Apply',
+                closingIn: (s) => `closing in: ${s}`,
+                tagChangelogTitle: 'CHANGELOG',
+                changelogBadge: 'v1.0.0 — First Public Release',
+                changelogTag: 'Latest',
+                changelogDate: '2026',
+                changelogListHtml: `
+                    <li>First public release on GitHub!</li>
+                    <li>Real-time PC electricity cost calculation & AC wall power simulation.</li>
+                    <li>Floating in-game HUD overlay with two display modes: Standard Pill and Mini Cube.</li>
+                    <li>Click-Through mode (<code>Ctrl + Shift + X</code>) so mouse clicks pass directly into games.</li>
+                    <li>Automatic 3D game tracking with session history, kWh, and GPU load logging.</li>
+                    <li>Physical hardware simulation: CPU dynamic load, GPU sensor/TDP, RAM, SSD, cooling, and 80 PLUS PSU curves.</li>
+                    <li>1-click hardware auto-detection via Windows CIM/WMI.</li>
+                    <li>Multi-currency and regional utility presets (US, EU, UK, RU, KZ, and custom rates).</li>
+                    <li>Multilingual support: English (default), Russian, and Spanish.</li>
+                `,
+                tabAbout: 'About',
+                aboutAppDesc: 'Real-time PC electricity cost and AC wall power draw monitor with an in-game HUD overlay for Windows.',
+                tagAboutLinks: 'OFFICIAL LINKS & DOWNLOADS',
+                aboutGithubTitle: 'GitHub Repository',
+                aboutDownloadTitle: 'Download & Releases',
+                aboutDownloadSub: 'Get latest installer (.exe) on GitHub',
+                aboutWebsiteTitle: 'Author Website',
+                btnAboutGithub: 'Open GitHub ↗',
+                btnAboutDownload: 'Download ↗',
+                btnAboutWebsite: 'Visit Website ↗',
+                tagAboutShortcuts: 'GLOBAL KEYBOARD SHORTCUTS',
+                aboutScHud: 'Toggle HUD Overlay:',
+                aboutScMode: 'Switch Mode (Pill / Cube):',
+                aboutScClick: 'Click-Through Mode:',
+                aboutScDash: 'Toggle Dashboard:'
+            },
+            ru: {
+                langToggle: '🌐 RU',
+                tabTelemetry: 'Телеметрия',
+                tabGames: 'Игровой трекер',
+                tabSettings: 'Оборудование и тарифы',
+                tabChangelog: 'История версий',
+                tagHeroTotal: 'ОБЩЕЕ ПОТРЕБЛЕНИЕ ИЗ РОЗЕТКИ',
+                heroSubtagPower: 'Текущая мощность',
+                heroSubtagRateHour: 'Расход в час',
+                heroSubtagRateMin: (m) => `Расход за ${m} мин`,
+                heroSubtagAvgHour: 'Средний / час',
+                heroSubtagAvgMin: (m) => `Средний / ${m} мин`,
+                heroSubtagSpent: 'Расход за сессию',
+                heroEnergyText: (kwh) => `Потребление за сессию: ${kwh.toFixed(4)} кВт⋅ч`,
+                heroAvgWattsText: (w) => `Ср. мощность: ${w.toFixed(1)} W`,
+                tagComponentBreakdown: 'РАСПРЕДЕЛЕНИЕ МОЩНОСТИ ПО КОМПОНЕНТАМ',
+                compTitleGpu: 'Видеокарта (GPU)',
+                compTitleCpu: 'Центральный процессор (CPU)',
+                compTitleMonitor: 'Монитор и частота обновления (Гц)',
+                compTitlePeriph: 'ОЗУ, диски, кулеры, помпа и RGB',
+                compTitlePsu: 'Блок питания (КПД стандарта 80 PLUS)',
+                gpuDetailsEstimated: (load, tdp, pct) => `Загрузка: ${load}%  •  TDP профиль: ${tdp}W  •  Доля: ${pct}%`,
+                gpuDetailsDirect: (load, temp, pct) => `Загрузка: ${load}%  •  Температура: ${temp}°C  •  Доля: ${pct}%`,
+                cpuDetails: (load, tdp, pct) => `Загрузка: ${load}%  •  TDP профиль: ${tdp}W  •  Доля: ${pct}%`,
+                monitorDetails: (hz, pct) => `Частота: ${hz} Гц  •  Скалер, T-Con и подсветка (Доля: ${pct}%)`,
+                periphDetails: (m) => `ОЗУ: ~${m.ram_watts}W  •  Диски: ~${m.storage_watts}W  •  Охлаждение: ~${m.cooling_watts}W  •  RGB: ~${m.rgb_watts}W  •  Мат. плата: ~${m.mobo_watts}W`,
+                psuLoss: (w) => `Потери на тепло: ${w.toFixed(1)} W`,
+                psuEff: (eff) => `${eff.toFixed(1)}% КПД`,
+                psuDetails: (dc, wall) => `Внутренняя линия DC: ${dc.toFixed(1)} W ➔ Из розетки AC: ${wall.toFixed(1)} W (КПД по кривой нагрузки)`,
+                gameHeroTagIdle: 'АВТО-ТРЕКИНГ ИГРЫ: ОЖИДАНИЕ ЗАПУСКА...',
+                gameHeroTagActive: (name) => `СЕЙЧАС В ИГРЕ: ${name.toUpperCase()}`,
+                gameActiveBadge: 'Активна',
+                gameSubtagWatts: 'Мощность всего ПК',
+                gameSubtagSpent: 'Затраты на игру',
+                gameSubtagGpu: 'Видеокарта (GPU)',
+                gameSubtagAvg: 'Средняя мощность',
+                gameLiveKwhText: (kwh) => `Расход энергии в игре: ${kwh.toFixed(4)} кВт⋅ч`,
+                gameLiveGpuText: (temp, watts, load) => `Температура GPU: ${temp || '--'}°C (ср. ${watts}W / ${load}% load)`,
+                gameIdleTitle: '🎮 3D-игра сейчас не запущена',
+                gameIdleDesc: 'Система автоматически распознает запуск любой 3D-игры (Steam, Epic Games, Ubisoft Connect, Riot, Lesta, Roblox, EA, Battle.net и др.) и рассчитывает нагрузку GPU, мощность ПК и стоимость сессии.',
+                gameSummaryTitle: 'ОБЩАЯ СТАТИСТИКА ИГРОВЫХ СЕССИЙ',
+                statSubtagHours: 'Всего в играх',
+                statSubtagCost: 'Всего потрачено',
+                statSubtagKwh: 'Киловатт-часы',
+                statSubtagWatts: 'Ср. мощность в играх',
+                gameHistoryTag: 'ИСТОРИЯ ЗАВЕРШЕННЫХ ИГРОВЫХ СЕССИЙ',
+                btnClearGameHistoryLabel: '🗑️ Очистить историю',
+                emptyHistoryMsg: 'История игр пока пуста. Запустите любую игру (Watch Dogs 2, Roblox, Cyberpunk и др.) — сессия запишется сюда автоматически!',
+                confirmClearHistory: 'Очистить сохраненную историю всех игровых сессий?',
+                toastHistoryCleared: '✓ История игр очищена',
+                toastSettingsSaved: '✓ Настройки сохранены',
+                toastSessionReset: '✓ Сессия сброшена',
+                toastHardwareDetected: '✓ Железо успешно распознано',
+                autoDetecting: '⏳ Определение...',
+                autoDetectBtnLabel: '🔍 Определить всё железо',
+                autoDetectRepeatLabel: '🔍 Повторить определение',
+                tagInterfaceLang: 'ЯЗЫК ИНТЕРФЕЙСА',
+                tagWizardHeader: 'МАСТЕР НАЧАЛЬНОЙ НАСТРОЙКИ',
+                tagWizardSub: 'Пошаговый мастер настройки (режим виджета HUD, тариф электроэнергии и охлаждение CPU)',
+                btnLaunchWizardLabel: '🧙 Запустить мастер настройки',
+                tagRegionalPresets: 'РЕГИОНАЛЬНЫЕ ТАРИФЫ НА ЭЛЕКТРОЭНЕРГИЮ',
+                optPresetsDefault: 'Выберите региональный тариф...',
+                tagTariffHeader: 'ТАРИФ И ИНТЕРВАЛ РАСЧЁТА',
+                labelCurSym: 'Символ валюты',
+                labelTariff: 'Тариф за 1 кВт⋅ч',
+                labelRateInterval: 'Интервал расчёта стоимости (минут) — RATE',
+                btnRate15: '15 мин',
+                btnRate30: '30 мин',
+                btnRate60: '1 ч (60м)',
+                tagHudHeader: 'РЕЖИМЫ И ОТОБРАЖЕНИЕ ОВЕРЛЕЯ (HUD)',
+                labelHudMode: 'Форм-фактор виджета HUD',
+                optHudNormal: 'Обычный виджет (Полный — Ватты, Тариф, Сессия)',
+                optHudMini: 'Мини-кубик (Компактный — только Ватты и Расход)',
+                labelHudInterval: 'Интервал обновления телеметрии HUD',
+                optHudInt1: '1 сек (Максимальная точность)',
+                optHudInt2: '2 сек (Рекомендуется)',
+                optHudInt5: '5 сек (Сбалансированный)',
+                optHudInt10: '10 сек (Энергосбережение)',
+                labelHudMetricsTitle: 'Отображаемые метрики в полном режиме HUD:',
+                labelCheckHudPower: 'Текущая мощность (POWER)',
+                labelCheckHudRate: 'Текущий тариф (RATE)',
+                labelCheckHudAvg: 'Средний расход (AVG/HR)',
+                labelCheckHudSession: 'Расход за сессию (SESSION)',
+                labelCheckAlwaysOnTop: 'Оверлей поверх всех окон и игр (DirectX/Vulkan Fullscreen Overlay)',
+                tipFullscreenBox: '💡 <strong>Совет для игр:</strong> Если игра перекрывает оверлей (например, Watch Dogs 2), переключите режим экрана в настройках графики игры на <em>«В окне без рамки» (Borderless)</em>. FPS в игре будет абсолютно таким же, а оверлей никогда не исчезнет!',
+                labelCheckClickThrough: '🖱️ Режим «Сквозных кликов» — клики мыши проходят сквозь виджет прямо в игру (Ctrl + Shift + X)',
+                labelCheckSmooth: '✨ Плавная анимация цифр (Плавный переход между значениями)',
+                labelOpacityTitle: 'Прозрачность виджета HUD:',
+                tagSysHeader: 'СИСТЕМНЫЕ НАСТРОЙКИ И АВТОЗАПУСК',
+                labelCheckAutostart: '🚀 Автозапуск с Windows (Фоновый запуск с приоритетом Above Normal)',
+                labelCheckHudStartup: '👁️ Показывать виджет HUD при старте Windows (если выкл., считает тихо в трее)',
+                tagDetectHeader: 'АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ ЖЕЛЕЗА ПК',
+                descDetect: 'Определяет процессор, видеокарту, ОЗУ, накопители, герцовку и БП в 1 клик',
+                tagGpuHeader: 'ВИДЕОКАРТА И GPU',
+                labelGpuName: 'Модель видеокарты',
+                labelGpuTdp: 'TDP видеокарты (Ватт)',
+                tagMonitorHeader: 'МОНИТОР: ГЕРЦОВКА И МАТРИЦА',
+                labelMonHz: 'Частота обновления (Гц)',
+                labelMonPreset: 'Диагональ и тип матрицы',
+                optMonStd24: 'Стандартный 24" FHD (22 Вт)',
+                optMonGaming: 'Игровой 27"-32" 2K/4K (38 Вт)',
+                optMonUltrawide: 'Ультраширокий / OLED 34"+ (58 Вт)',
+                tagCpuHeader: 'ПРОЦЕССОР И ОХЛАЖДЕНИЕ',
+                labelCpuTdp: 'TDP процессора (Ватт)',
+                labelCoolingType: 'Тип системы охлаждения',
+                optCoolingAio: 'СЖО / Водянка AIO с помпой (~10 Вт)',
+                optCoolingAir: 'Воздушный башенный кулер (~3 Вт)',
+                labelCaseFans: 'Корпусные вентиляторы (шт)',
+                labelRgb: 'ARGB подсветка (корпус / память)',
+                optRgbOn: 'Включена (+6 Вт)',
+                optRgbOff: 'Выключена (0 Вт)',
+                tagMemHeader: 'ОПЕРАТИВНАЯ ПАМЯТЬ И НАКОПИТЕЛИ',
+                labelRamSticks: 'Модули памяти RAM (DDR4 / DDR5)',
+                optRam1: '1 планка (4.5 Вт)',
+                optRam2: '2 планки (9 Вт)',
+                optRam4: '4 планки (18 Вт)',
+                labelNvme: 'Накопители NVMe M.2 SSD',
+                labelHdd: 'Жёсткие диски HDD (3.5")',
+                tagPsuHeader: 'БЛОК ПИТАНИЯ (КПД 80 PLUS)',
+                labelPsuWatts: 'Номинальная мощность БП (Ватт)',
+                labelPsuCert: 'Сертификат 80 PLUS',
+                optPsuBronze: '80 PLUS Bronze (85% пик)',
+                optPsuSilver: '80 PLUS Silver (88% пик)',
+                optPsuGold: '80 PLUS Gold (90% пик)',
+                optPsuPlatinum: '80 PLUS Platinum (92% пик)',
+                optPsuTitanium: '80 PLUS Titanium (94% пик)',
+                btnResetSessionLabel: 'Сбросить сессию',
+                btnToggleHudLabel: 'Показать/Скрыть HUD',
+                btnApply: 'Применить',
+                closingIn: (s) => `закроется через: ${s}`,
+                tagChangelogTitle: 'ИСТОРИЯ ИЗМЕНЕНИЙ',
+                changelogBadge: 'v1.0.0 — Первый публичный релиз',
+                changelogTag: 'Релиз',
+                changelogDate: '2026',
+                changelogListHtml: `
+                    <li>Первый публичный релиз на GitHub!</li>
+                    <li>Подсчет стоимости электроэнергии компьютера и потребления из розетки в реальном времени.</li>
+                    <li>Плавающий игровой оверлей (HUD) с двумя режимами: обычный виджет и мини-кубик.</li>
+                    <li>Режим сквозных кликов (<code>Ctrl + Shift + X</code>), чтобы кликать в игру сквозь виджет.</li>
+                    <li>Автоматический трекинг 3D-игр с историей сессий, кВт⋅ч и нагрузкой видеокарты.</li>
+                    <li>Учет физики железа: нагрузка CPU, датчик GPU, память, накопители, помпа/кулеры и КПД блоков питания 80 PLUS.</li>
+                    <li>Автоопределение характеристик ПК в 1 клик через Windows CIM/WMI.</li>
+                    <li>Поддержка региональных тарифов ($, ₽, €, £, ₸) и любых кастомных валют.</li>
+                    <li>Поддержка трех языков: английский (по умолчанию), русский и испанский.</li>
+                `,
+                tabAbout: 'О программе',
+                aboutAppDesc: 'Мониторинг расхода электроэнергии и мощности ПК в реальном времени с игровым оверлеем для Windows.',
+                tagAboutLinks: 'ОФИЦИАЛЬНЫЕ ССЫЛКИ И ЗАГРУЗКИ',
+                aboutGithubTitle: 'Репозиторий на GitHub',
+                aboutDownloadTitle: 'Скачать обновления и релизы',
+                aboutDownloadSub: 'Скачать готовый файл установщика (.exe)',
+                aboutWebsiteTitle: 'Официальный сайт',
+                btnAboutGithub: 'Открыть GitHub ↗',
+                btnAboutDownload: 'Скачать ↗',
+                btnAboutWebsite: 'Перейти на сайт ↗',
+                tagAboutShortcuts: 'ГЛОБАЛЬНЫЕ ГОРЯЧИЕ КЛАВИШИ',
+                aboutScHud: 'Показать/скрыть виджет HUD:',
+                aboutScMode: 'Переключить режим (Обычный/Мини):',
+                aboutScClick: 'Сквозные клики (Click-Through):',
+                aboutScDash: 'Открыть/скрыть дашборд:'
+            },
+            es: {
+                langToggle: '🌐 ES',
+                tabTelemetry: 'Telemetría',
+                tabGames: 'Juegos',
+                tabSettings: 'Hardware y Tarifas',
+                tabChangelog: 'Historial',
+                tagHeroTotal: 'CONSUMO TOTAL DE LA RED ELÉCTRICA',
+                heroSubtagPower: 'Potencia activa',
+                heroSubtagRateHour: 'Coste por hora',
+                heroSubtagRateMin: (m) => `Coste por ${m} min`,
+                heroSubtagAvgHour: 'Media / hora',
+                heroSubtagAvgMin: (m) => `Media / ${m} min`,
+                heroSubtagSpent: 'Coste de sesión',
+                heroEnergyText: (kwh) => `Consumo de energía de la sesión: ${kwh.toFixed(4)} kWh`,
+                heroAvgWattsText: (w) => `Potencia media: ${w.toFixed(1)} W`,
+                tagComponentBreakdown: 'DESGLOSE DE CONSUMO POR COMPONENTE',
+                compTitleGpu: 'Tarjeta Gráfica (GPU)',
+                compTitleCpu: 'Procesador Central (CPU)',
+                compTitleMonitor: 'Monitor y Frecuencia de Refresco (Hz)',
+                compTitlePeriph: 'RAM, SSD, Ventiladores, Bomba y RGB',
+                compTitlePsu: 'Fuente de Alimentación (Eficiencia 80 PLUS)',
+                gpuDetailsEstimated: (load, tdp, pct) => `Carga: ${load}%  •  Perfil TDP (${tdp}W)  •  Cuota: ${pct}%`,
+                gpuDetailsDirect: (load, temp, pct) => `Carga: ${load}%  •  Temp: ${temp}°C  •  Cuota: ${pct}%`,
+                cpuDetails: (load, tdp, pct) => `Carga: ${load}%  •  Perfil TDP: ${tdp}W  •  Cuota: ${pct}%`,
+                monitorDetails: (hz, pct) => `Frecuencia: ${hz} Hz  •  Escalador, T-Con y retroiluminación (Cuota: ${pct}%)`,
+                periphDetails: (m) => `RAM: ~${m.ram_watts}W  •  Discos: ~${m.storage_watts}W  •  Refrigeración: ~${m.cooling_watts}W  •  RGB: ~${m.rgb_watts}W  •  Placa base: ~${m.mobo_watts}W`,
+                psuLoss: (w) => `Pérdida térmica: ${w.toFixed(1)} W`,
+                psuEff: (eff) => `${eff.toFixed(1)}% de Eficiencia`,
+                psuDetails: (dc, wall) => `CC interna: ${dc.toFixed(1)} W ➔ Red de pared CA: ${wall.toFixed(1)} W (Eficiencia según curva de carga)`,
+                gameHeroTagIdle: 'SEGUIMIENTO AUTOMÁTICO: ESPERANDO JUEGO...',
+                gameHeroTagActive: (name) => `JUGANDO AHORA: ${name.toUpperCase()}`,
+                gameActiveBadge: 'Activo',
+                gameSubtagWatts: 'Potencia total del PC',
+                gameSubtagSpent: 'Gastado en el juego',
+                gameSubtagGpu: 'Gráficos (GPU)',
+                gameSubtagAvg: 'Potencia media',
+                gameLiveKwhText: (kwh) => `Energía consumida en el juego: ${kwh.toFixed(4)} kWh`,
+                gameLiveGpuText: (temp, watts, load) => `Temp. GPU: ${temp || '--'}°C (media ${watts}W / ${load}% carga)`,
+                gameIdleTitle: '🎮 No se está ejecutando ningún juego 3D',
+                gameIdleDesc: 'El sistema detecta automáticamente cuando inicias un juego 3D (Steam, Epic Games, Ubisoft Connect, Riot, Lesta, Roblox, EA, Battle.net, etc.) y calcula el consumo de la GPU, potencia total y coste eléctrico por sesión.',
+                gameSummaryTitle: 'RESUMEN HISTÓRICO DE SESIONES DE JUEGO',
+                statSubtagHours: 'Tiempo total',
+                statSubtagCost: 'Gasto total',
+                statSubtagKwh: 'Kilovatios-hora',
+                statSubtagWatts: 'Potencia media en juegos',
+                gameHistoryTag: 'HISTORIAL DE SESIONES DE JUEGO COMPLETADAS',
+                btnClearGameHistoryLabel: '🗑️ Borrar historial',
+                emptyHistoryMsg: 'El historial de juegos está vacío. ¡Inicia cualquier juego (Watch Dogs 2, Roblox, Cyberpunk, etc.) y se registrará aquí automáticamente!',
+                confirmClearHistory: '¿Borrar todo el historial guardado de sesiones de juego?',
+                toastHistoryCleared: '✓ Historial de juegos borrado',
+                toastSettingsSaved: '✓ Ajustes guardados correctamente',
+                toastSessionReset: '✓ Sesión reiniciada',
+                toastHardwareDetected: '✓ Hardware detectado correctamente',
+                autoDetecting: '⏳ Detectando...',
+                autoDetectBtnLabel: '🔍 Detectar todo el hardware',
+                autoDetectRepeatLabel: '🔍 Redetectar hardware',
+                tagInterfaceLang: 'IDIOMA DE LA APLICACIÓN',
+                tagWizardHeader: 'ASISTENTE DE CONFIGURACIÓN INICIAL',
+                tagWizardSub: 'Asistente paso a paso (modo de widget HUD, tarifa eléctrica y refrigeración de la CPU)',
+                btnLaunchWizardLabel: '🧙 Ejecutar asistente de configuración',
+                tagRegionalPresets: 'TARIFAS ELÉCTRICAS REGIONALES PREDETERMINADAS',
+                optPresetsDefault: 'Seleccione una tarifa regional preestablecida...',
+                tagTariffHeader: 'TARIFA E INTERVALO DE CÁLCULO',
+                labelCurSym: 'Símbolo de divisa',
+                labelTariff: 'Tarifa por 1 kWh',
+                labelRateInterval: 'Intervalo de cálculo de coste (minutos) — TARIFA',
+                btnRate15: '15 min',
+                btnRate30: '30 min',
+                btnRate60: '1 h (60m)',
+                tagHudHeader: 'COMPORTAMIENTO Y APARIENCIA DEL HUD FLOTANTE',
+                labelHudMode: 'Formato del widget HUD',
+                optHudNormal: 'Cápsula Estándar (Completo — Vatios, Tarifa, Sesión)',
+                optHudMini: 'Mini Cubo (Compacto — solo Vatios y Sesión)',
+                labelHudInterval: 'Intervalo de actualización de telemetría HUD',
+                optHudInt1: '1 seg (Máxima precisión)',
+                optHudInt2: '2 seg (Recomendado)',
+                optHudInt5: '5 seg (Equilibrado)',
+                optHudInt10: '10 seg (Ahorro de energía)',
+                labelHudMetricsTitle: 'Métricas visibles en modo HUD completo:',
+                labelCheckHudPower: 'Potencia actual (POWER)',
+                labelCheckHudRate: 'Tarifa del intervalo (RATE)',
+                labelCheckHudAvg: 'Tarifa media (AVG/HR)',
+                labelCheckHudSession: 'Total de la sesión (SESSION)',
+                labelCheckAlwaysOnTop: 'Superposición sobre todas las ventanas y juegos (DirectX/Vulkan Fullscreen Overlay)',
+                tipFullscreenBox: '💡 <strong>Consejo para juegos:</strong> Si un juego oculta la superposición (p. ej., Watch Dogs 2), cambia el modo de pantalla en los ajustes gráficos del juego a <em>Sin bordes / Ventana completa</em>. ¡Los FPS serán idénticos y el HUD permanecerá siempre visible!',
+                labelCheckClickThrough: '🖱️ Modo Clics Transparentes — los clics del ratón atraviesan el widget directamente al juego (Ctrl + Shift + X)',
+                labelCheckSmooth: '✨ Animación suave de números (Transición fluida entre valores numéricos)',
+                labelOpacityTitle: 'Opacidad del widget HUD:',
+                tagSysHeader: 'AJUSTES DEL SISTEMA Y ARRANQUE DE WINDOWS',
+                labelCheckAutostart: '🚀 Iniciar con Windows (Inicio en segundo plano con prioridad Above Normal)',
+                labelCheckHudStartup: '👁️ Mostrar widget HUD al iniciar Windows (si está desactivado, monitoriza en silencio en la bandeja)',
+                tagDetectHeader: 'DETECCIÓN AUTOMÁTICA DE HARDWARE DEL PC',
+                descDetect: 'Detecta CPU, GPU, RAM, almacenamiento, frecuencia de refresco y fuente en 1 clic',
+                tagGpuHeader: 'TARJETA GRÁFICA Y GPU',
+                labelGpuName: 'Modelo de la tarjeta gráfica',
+                labelGpuTdp: 'TDP de la GPU (Vatios)',
+                tagMonitorHeader: 'MONITOR: FRECUENCIA DE REFRESCO Y PANEL',
+                labelMonHz: 'Frecuencia de refresco (Hz)',
+                labelMonPreset: 'Tipo y tamaño de pantalla',
+                optMonStd24: 'Estándar 24" FHD (22 W)',
+                optMonGaming: 'Gaming 27"-32" 2K/4K (38 W)',
+                optMonUltrawide: 'Ultrawide / OLED 34"+ (58 W)',
+                tagCpuHeader: 'PROCESADOR Y REFRIGERACIÓN',
+                labelCpuTdp: 'TDP de la CPU (Vatios)',
+                labelCoolingType: 'Tipo de refrigeración de la CPU',
+                optCoolingAio: 'Refrigeración líquida AIO con bomba (~10 W)',
+                optCoolingAir: 'Disipador de torre por aire (~3 W)',
+                labelCaseFans: 'Cantidad de ventiladores de la caja',
+                labelRgb: 'Iluminación ARGB (caja / RAM)',
+                optRgbOn: 'Activada (+6 W)',
+                optRgbOff: 'Desactivada (0 W)',
+                tagMemHeader: 'MEMORIA Y ALMACENAMIENTO',
+                labelRamSticks: 'Módulos de memoria RAM (DDR4 / DDR5)',
+                optRam1: '1 módulo (4.5 W)',
+                optRam2: '2 módulos (9 W)',
+                optRam4: '4 módulos (18 W)',
+                labelNvme: 'Unidades SSD NVMe M.2',
+                labelHdd: 'Discos duros mecánicos HDD (3.5")',
+                tagPsuHeader: 'FUENTE DE ALIMENTACIÓN (EFICIENCIA 80 PLUS)',
+                labelPsuWatts: 'Potencia nominal de la fuente (Vatios)',
+                labelPsuCert: 'Certificación 80 PLUS',
+                optPsuBronze: '80 PLUS Bronze (85% pico)',
+                optPsuSilver: '80 PLUS Silver (88% pico)',
+                optPsuGold: '80 PLUS Gold (90% pico)',
+                optPsuPlatinum: '80 PLUS Platinum (92% pico)',
+                optPsuTitanium: '80 PLUS Titanium (94% pico)',
+                btnResetSessionLabel: 'Reiniciar sesión',
+                btnToggleHudLabel: 'Alternar HUD',
+                btnApply: 'Aplicar',
+                closingIn: (s) => `cerrando en: ${s}`,
+                tagChangelogTitle: 'HISTORIAL DE CAMBIOS',
+                changelogBadge: 'v1.0.0 — Primer lanzamiento público',
+                changelogTag: 'Última versión',
+                changelogDate: '2026',
+                changelogListHtml: `
+                    <li>¡Primer lanzamiento público en GitHub!</li>
+                    <li>Cálculo en tiempo real del coste eléctrico del PC y simulación del consumo de pared CA.</li>
+                    <li>Superposición HUD flotante para juegos con dos modos: Cápsula Estándar y Mini Cubo.</li>
+                    <li>Modo Clics Transparentes (<code>Ctrl + Shift + X</code>) para que los clics pasen directamente al juego.</li>
+                    <li>Seguimiento automático de juegos 3D con historial de sesiones, kWh y registro de carga de GPU.</li>
+                    <li>Simulación física de hardware: carga dinámica de CPU, sensor/TDP de GPU, RAM, SSD, refrigeración y curvas de eficiencia 80 PLUS.</li>
+                    <li>Detección automática de hardware en 1 clic mediante Windows CIM/WMI.</li>
+                    <li>Soporte multidivisa y tarifas regionales predefinidas (EE. UU., España, UE, Reino Unido, Rusia, Kazajistán y tarifas personalizadas).</li>
+                    <li>Soporte multilingüe: inglés (predeterminado), ruso y español.</li>
+                `,
+                tabAbout: 'Acerca de',
+                aboutAppDesc: 'Control en tiempo real del coste eléctrico y consumo de energía del PC con widget HUD para juegos en Windows.',
+                tagAboutLinks: 'ENLACES OFICIALES Y DESCARGAS',
+                aboutGithubTitle: 'Repositorio en GitHub',
+                aboutDownloadTitle: 'Descargas y versiones',
+                aboutDownloadSub: 'Obtener el instalador más reciente (.exe)',
+                aboutWebsiteTitle: 'Sitio web oficial',
+                btnAboutGithub: 'Abrir GitHub ↗',
+                btnAboutDownload: 'Descargar ↗',
+                btnAboutWebsite: 'Visitar sitio ↗',
+                tagAboutShortcuts: 'ATAJOS DE TECLADO GLOBALES',
+                aboutScHud: 'Mostrar/ocultar widget HUD:',
+                aboutScMode: 'Cambiar modo (Píldora / Cubo):',
+                aboutScClick: 'Modo clics transparentes:',
+                aboutScDash: 'Abrir/ocultar panel:'
+            }
+        };
+
+        function applyDashboardLanguage(lang) {
+            lang = ['ru', 'es'].includes(lang) ? lang : 'en';
+            const t = DASHBOARD_I18N[lang];
+            if (!t) return;
+
+            const setTxt = (id, txt) => {
+                const el = document.getElementById(id);
+                if (el && txt !== undefined) el.innerText = txt;
+            };
+            const setHtml = (id, html) => {
+                const el = document.getElementById(id);
+                if (el && html !== undefined) el.innerHTML = html;
+            };
+
+            setTxt('btnLangToggle', t.langToggle);
+            setTxt('tabLabelTelemetry', t.tabTelemetry);
+            setTxt('tabLabelGames', t.tabGames);
+            setTxt('tabLabelSettings', t.tabSettings);
+            setTxt('tabLabelChangelog', t.tabChangelog);
+            setTxt('tabLabelAbout', t.tabAbout);
+
+            setTxt('aboutAppDesc', t.aboutAppDesc);
+            setTxt('tagAboutLinks', t.tagAboutLinks);
+            setTxt('aboutGithubTitle', t.aboutGithubTitle);
+            setTxt('aboutDownloadTitle', t.aboutDownloadTitle);
+            setTxt('aboutDownloadSub', t.aboutDownloadSub);
+            setTxt('aboutWebsiteTitle', t.aboutWebsiteTitle);
+            setTxt('btnAboutGithub', t.btnAboutGithub);
+            setTxt('btnAboutDownload', t.btnAboutDownload);
+            setTxt('btnAboutWebsite', t.btnAboutWebsite);
+            setTxt('tagAboutShortcuts', t.tagAboutShortcuts);
+            setTxt('aboutScHud', t.aboutScHud);
+            setTxt('aboutScMode', t.aboutScMode);
+            setTxt('aboutScClick', t.aboutScClick);
+            setTxt('aboutScDash', t.aboutScDash);
+
+            setTxt('tagHeroTotal', t.tagHeroTotal);
+            setTxt('heroSubtagPower', t.heroSubtagPower);
+            setTxt('heroSubtagSpent', t.heroSubtagSpent);
+
+            setTxt('tagComponentBreakdown', t.tagComponentBreakdown);
+            setTxt('compTitleGpu', t.compTitleGpu);
+            setTxt('compTitleCpu', t.compTitleCpu);
+            setTxt('compTitleMonitor', t.compTitleMonitor);
+            setTxt('compTitlePeriph', t.compTitlePeriph);
+            setTxt('compTitlePsu', t.compTitlePsu);
+
+            const activeGame = lastMetrics?.active_game;
+            if (activeGame && activeGame.is_active) {
+                setTxt('gameHeroTag', t.gameHeroTagActive(activeGame.name));
+            } else {
+                setTxt('gameHeroTag', t.gameHeroTagIdle);
+            }
+
+            setTxt('gameActiveBadge', t.gameActiveBadge);
+            setTxt('gameSubtagWatts', t.gameSubtagWatts);
+            setTxt('gameSubtagSpent', t.gameSubtagSpent);
+            setTxt('gameSubtagGpu', t.gameSubtagGpu);
+            setTxt('gameSubtagAvg', t.gameSubtagAvg);
+            setTxt('gameIdleTitle', t.gameIdleTitle);
+            setTxt('gameIdleDesc', t.gameIdleDesc);
+            setTxt('gameSummaryTitle', t.gameSummaryTitle);
+            setTxt('statSubtagHours', t.statSubtagHours);
+            setTxt('statSubtagCost', t.statSubtagCost);
+            setTxt('statSubtagKwh', t.statSubtagKwh);
+            setTxt('statSubtagWatts', t.statSubtagWatts);
+            setTxt('gameHistoryTag', t.gameHistoryTag);
+            setTxt('btnClearGameHistoryLabel', t.btnClearGameHistoryLabel);
+
+            setTxt('tagInterfaceLang', t.tagInterfaceLang);
+            setTxt('tagWizardHeader', t.tagWizardHeader);
+            setTxt('tagWizardSub', t.tagWizardSub);
+            setTxt('btnLaunchWizardLabel', t.btnLaunchWizardLabel);
+            setTxt('tagRegionalPresets', t.tagRegionalPresets);
+            setTxt('optPresetsDefault', t.optPresetsDefault);
+            setTxt('tagTariffHeader', t.tagTariffHeader);
+            setTxt('labelCurSym', t.labelCurSym);
+            setTxt('labelTariff', t.labelTariff);
+            setTxt('labelRateInterval', t.labelRateInterval);
+            setTxt('btnRate15', t.btnRate15);
+            setTxt('btnRate30', t.btnRate30);
+            setTxt('btnRate60', t.btnRate60);
+
+            setTxt('tagHudHeader', t.tagHudHeader);
+            setTxt('labelHudMode', t.labelHudMode);
+            setTxt('optHudNormal', t.optHudNormal);
+            setTxt('optHudMini', t.optHudMini);
+            setTxt('labelHudInterval', t.labelHudInterval);
+            setTxt('optHudInt1', t.optHudInt1);
+            setTxt('optHudInt2', t.optHudInt2);
+            setTxt('optHudInt5', t.optHudInt5);
+            setTxt('optHudInt10', t.optHudInt10);
+            setTxt('labelHudMetricsTitle', t.labelHudMetricsTitle);
+            setTxt('labelCheckHudPower', t.labelCheckHudPower);
+            setTxt('labelCheckHudRate', t.labelCheckHudRate);
+            setTxt('labelCheckHudAvg', t.labelCheckHudAvg);
+            setTxt('labelCheckHudSession', t.labelCheckHudSession);
+            setTxt('labelCheckAlwaysOnTop', t.labelCheckAlwaysOnTop);
+            setHtml('tipFullscreenBox', t.tipFullscreenBox);
+            setTxt('labelCheckClickThrough', t.labelCheckClickThrough);
+            setTxt('labelCheckSmooth', t.labelCheckSmooth);
+            setTxt('labelOpacityTitle', t.labelOpacityTitle);
+
+            setTxt('tagSysHeader', t.tagSysHeader);
+            setTxt('labelCheckAutostart', t.labelCheckAutostart);
+            setTxt('labelCheckHudStartup', t.labelCheckHudStartup);
+            setTxt('tagDetectHeader', t.tagDetectHeader);
+            setTxt('descDetect', t.descDetect);
+            setTxt('btnAutoDetectLabel', t.autoDetectBtnLabel);
+
+            setTxt('tagGpuHeader', t.tagGpuHeader);
+            setTxt('labelGpuName', t.labelGpuName);
+            setTxt('labelGpuTdp', t.labelGpuTdp);
+            setTxt('tagMonitorHeader', t.tagMonitorHeader);
+            setTxt('labelMonHz', t.labelMonHz);
+            setTxt('labelMonPreset', t.labelMonPreset);
+            setTxt('optMonStd24', t.optMonStd24);
+            setTxt('optMonGaming', t.optMonGaming);
+            setTxt('optMonUltrawide', t.optMonUltrawide);
+
+            setTxt('tagCpuHeader', t.tagCpuHeader);
+            setTxt('labelCpuTdp', t.labelCpuTdp);
+            setTxt('labelCoolingType', t.labelCoolingType);
+            setTxt('optCoolingAio', t.optCoolingAio);
+            setTxt('optCoolingAir', t.optCoolingAir);
+            setTxt('labelCaseFans', t.labelCaseFans);
+            setTxt('labelRgb', t.labelRgb);
+            setTxt('optRgbOn', t.optRgbOn);
+            setTxt('optRgbOff', t.optRgbOff);
+
+            setTxt('tagMemHeader', t.tagMemHeader);
+            setTxt('labelRamSticks', t.labelRamSticks);
+            setTxt('optRam1', t.optRam1);
+            setTxt('optRam2', t.optRam2);
+            setTxt('optRam4', t.optRam4);
+            setTxt('labelNvme', t.labelNvme);
+            setTxt('labelHdd', t.labelHdd);
+
+            setTxt('tagPsuHeader', t.tagPsuHeader);
+            setTxt('labelPsuWatts', t.labelPsuWatts);
+            setTxt('labelPsuCert', t.labelPsuCert);
+            setTxt('optPsuBronze', t.optPsuBronze);
+            setTxt('optPsuSilver', t.optPsuSilver);
+            setTxt('optPsuGold', t.optPsuGold);
+            setTxt('optPsuPlatinum', t.optPsuPlatinum);
+            setTxt('optPsuTitanium', t.optPsuTitanium);
+
+            setTxt('tagChangelogTitle', t.tagChangelogTitle);
+            setTxt('changelogBadge', t.changelogBadge);
+            setTxt('changelogTag', t.changelogTag);
+            setTxt('changelogDate', t.changelogDate);
+            setHtml('changelogList', t.changelogListHtml);
+
+            setTxt('btnResetSessionLabel', t.btnResetSessionLabel);
+            setTxt('btnToggleHudLabel', t.btnToggleHudLabel);
+
+            const btnApply = document.getElementById('btnApply');
+            if (btnApply && !countdownTimer) {
+                btnApply.innerText = t.btnApply;
+            }
+
+            const selectLanguage = document.getElementById('selectLanguage');
+            if (selectLanguage && selectLanguage.value !== lang) {
+                selectLanguage.value = lang;
+            }
+        }
+
+        function formatCurrency(val, symbol, isRate, rateMinutes) {
+            symbol = (symbol || '$').trim();
+            rateMinutes = rateMinutes || currentConfig.rate_interval_minutes || 60;
+            const lang = currentConfig.language || 'en';
+            const isPostfix = ['₽', '₸', '₴', '€'].includes(symbol) || symbol.length > 1;
+            if (isRate) {
+                const dec = val < 1.0 ? 3 : 2;
+                const s = val.toFixed(dec);
+                let unit = '/hr';
+                if (lang === 'ru' || ['₽', '₸', '₴'].includes(symbol)) {
+                    unit = rateMinutes === 60 ? '/ч' : `/${rateMinutes}м`;
+                } else if (lang === 'es') {
+                    unit = rateMinutes === 60 ? '/h' : `/${rateMinutes}min`;
+                } else {
+                    unit = rateMinutes === 60 ? '/hr' : `/${rateMinutes}m`;
+                }
+                return isPostfix ? `${s} ${symbol}${unit}` : `${symbol}${s}${unit}`;
+            } else {
+                const s = val.toFixed(2);
+                return isPostfix ? `${s} ${symbol}` : `${symbol}${s}`;
+            }
+        }
+
+        function formatSeconds(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = sec % 60;
+            return `⏱ ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('statusToast');
+            toast.innerText = msg;
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), 2000);
+        }
+
+        window.setRateQuick = function(min) {
+            document.getElementById('inputRateMinutes').value = min;
+            saveSettings();
+        };
+
+        // Tab Switching
+        const tabBtnTelemetry = document.getElementById('tabBtnTelemetry');
+        const tabBtnGames = document.getElementById('tabBtnGames');
+        const tabBtnSettings = document.getElementById('tabBtnSettings');
+        const tabBtnChangelog = document.getElementById('tabBtnChangelog');
+        const tabBtnAbout = document.getElementById('tabBtnAbout');
+        const viewTelemetry = document.getElementById('viewTelemetry');
+        const viewGames = document.getElementById('viewGames');
+        const viewSettings = document.getElementById('viewSettings');
+        const viewChangelog = document.getElementById('viewChangelog');
+        const viewAbout = document.getElementById('viewAbout');
+
+        function switchTab(activeBtn, activeView) {
+            [tabBtnTelemetry, tabBtnGames, tabBtnSettings, tabBtnChangelog, tabBtnAbout].forEach(b => b && b.classList.remove('active'));
+            [viewTelemetry, viewGames, viewSettings, viewChangelog, viewAbout].forEach(v => v && (v.style.display = 'none'));
+            if (activeBtn) activeBtn.classList.add('active');
+            if (activeView) activeView.style.display = 'flex';
+            if (activeView === viewGames) {
+                loadGameHistory();
+            }
+        }
+
+        tabBtnTelemetry.addEventListener('click', () => switchTab(tabBtnTelemetry, viewTelemetry));
+        tabBtnGames.addEventListener('click', () => switchTab(tabBtnGames, viewGames));
+        tabBtnSettings.addEventListener('click', () => switchTab(tabBtnSettings, viewSettings));
+        tabBtnChangelog.addEventListener('click', () => switchTab(tabBtnChangelog, viewChangelog));
+        tabBtnAbout.addEventListener('click', () => switchTab(tabBtnAbout, viewAbout));
+
+        window.openExternalUrl = function(url) {
+            if (window.api && window.api.openExternal) {
+                window.api.openExternal(url);
+            }
+        };
+
+        function resetApplyButton() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+            countdownSec = 3;
+            const btn = document.getElementById('btnApply');
+            if (btn) {
+                const lang = currentConfig.language || 'en';
+                btn.innerText = DASHBOARD_I18N[lang]?.btnApply || 'Apply';
+                btn.style.boxShadow = '';
+                btn.disabled = false;
+            }
+        }
+
+        // Language toggle button in title bar
+        const btnLangToggle = document.getElementById('btnLangToggle');
+        if (btnLangToggle) {
+            btnLangToggle.addEventListener('click', () => {
+                let nextLang = 'en';
+                if (currentConfig.language === 'en') nextLang = 'ru';
+                else if (currentConfig.language === 'ru') nextLang = 'es';
+                else nextLang = 'en';
+
+                currentConfig.language = nextLang;
+                window.api.updateConfig({ language: nextLang });
+                applyDashboardLanguage(nextLang);
+                if (lastMetrics) renderMetrics(lastMetrics);
+                if (lastSessions) renderGameHistoryList(lastSessions);
+            });
+        }
+
+        const selectLanguage = document.getElementById('selectLanguage');
+        if (selectLanguage) {
+            selectLanguage.addEventListener('change', (e) => {
+                const nextLang = e.target.value;
+                currentConfig.language = nextLang;
+                window.api.updateConfig({ language: nextLang });
+                applyDashboardLanguage(nextLang);
+                if (lastMetrics) renderMetrics(lastMetrics);
+                if (lastSessions) renderGameHistoryList(lastSessions);
+            });
+        }
+
+        // Hardware Auto-Detection Action
+        const btnAutoDetect = document.getElementById('btnAutoDetect');
+        const autoDetectSummary = document.getElementById('autoDetectSummary');
+
+        btnAutoDetect.addEventListener('click', async () => {
+            const lang = currentConfig.language || 'en';
+            const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+            btnAutoDetect.disabled = true;
+            btnAutoDetect.innerText = t.autoDetecting;
+            try {
+                const res = await window.api.autoDetectHardware();
+                const s = res?.specs || (res?.success ? res.specs : null);
+                if (s) {
+                    if (s.cpu?.tdp_watts) document.getElementById('inputCpuTdp').value = s.cpu.tdp_watts;
+                    if (s.gpu?.name) document.getElementById('inputGpuName').value = s.gpu.name;
+                    if (s.gpu?.tdp_watts) document.getElementById('inputGpuTdp').value = s.gpu.tdp_watts;
+                    if (s.monitor?.hz) document.getElementById('selectMonitorHz').value = String(s.monitor.hz);
+                    if (s.monitor?.preset) document.getElementById('selectMonitorPreset').value = s.monitor.preset;
+                    if (s.ram?.sticks) document.getElementById('selectRamSticks').value = String(s.ram.sticks);
+                    if (s.storage?.nvme_drives !== undefined) document.getElementById('inputNvme').value = s.storage.nvme_drives;
+                    if (s.storage?.hdd_drives !== undefined) document.getElementById('inputHdd').value = s.storage.hdd_drives;
+                    if (s.psu_suggested_watts) document.getElementById('inputPsuWatts').value = s.psu_suggested_watts;
+
+                    autoDetectSummary.style.display = 'block';
+                    if (lang === 'ru') {
+                        autoDetectSummary.innerHTML = `
+                            <div style="font-weight: 800; color: #34D399; margin-bottom: 6px;">✓ Железо успешно распознано:</div>
+                            <div><strong>• Процессор:</strong> ${s.cpu?.name || 'CPU'} (TDP ~${s.cpu?.tdp_watts || 120}W, ${s.cpu?.cores || 8} ядер / ${s.cpu?.threads || 16} потоков)</div>
+                            <div><strong>• Видеокарта:</strong> ${s.gpu?.name || 'GPU'} (TDP ~${s.gpu?.tdp_watts || 200}W, ~${s.gpu?.vram_gb || 8} GB VRAM)</div>
+                            <div><strong>• Дисплей:</strong> ${s.monitor?.hz || 144} Гц • ${s.monitor?.preset || 'gaming_27_32'}</div>
+                            <div><strong>• ОЗУ:</strong> ${s.ram?.sticks || 2} шт (${s.ram?.total_gb || 16} GB ${s.ram?.type || 'DDR4'} ${s.ram?.speed_mhz || 3200} MHz)</div>
+                            <div><strong>• Накопители:</strong> NVMe SSD: ${s.storage?.nvme_drives ?? 2} шт, HDD: ${s.storage?.hdd_drives ?? 0} шт</div>
+                            <div><strong>• Мат. плата:</strong> ${s.motherboard?.manufacturer || 'PC'} ${s.motherboard?.model || 'Motherboard'}</div>
+                            <div><strong>• Расчетный БП:</strong> ${s.psu_suggested_watts || 750}W 80 PLUS</div>
+                        `;
+                    } else if (lang === 'es') {
+                        autoDetectSummary.innerHTML = `
+                            <div style="font-weight: 800; color: #34D399; margin-bottom: 6px;">✓ Hardware detectado correctamente:</div>
+                            <div><strong>• Procesador:</strong> ${s.cpu?.name || 'CPU'} (TDP ~${s.cpu?.tdp_watts || 120}W, ${s.cpu?.cores || 8} núcleos / ${s.cpu?.threads || 16} hilos)</div>
+                            <div><strong>• Tarjeta gráfica:</strong> ${s.gpu?.name || 'GPU'} (TDP ~${s.gpu?.tdp_watts || 200}W, ~${s.gpu?.vram_gb || 8} GB VRAM)</div>
+                            <div><strong>• Monitor:</strong> ${s.monitor?.hz || 144} Hz • ${s.monitor?.preset || 'gaming_27_32'}</div>
+                            <div><strong>• Memoria RAM:</strong> ${s.ram?.sticks || 2} módulos (${s.ram?.total_gb || 16} GB ${s.ram?.type || 'DDR4'} ${s.ram?.speed_mhz || 3200} MHz)</div>
+                            <div><strong>• Almacenamiento:</strong> SSD NVMe: ${s.storage?.nvme_drives ?? 2}, HDD: ${s.storage?.hdd_drives ?? 0}</div>
+                            <div><strong>• Placa base:</strong> ${s.motherboard?.manufacturer || 'PC'} ${s.motherboard?.model || 'Motherboard'}</div>
+                            <div><strong>• Fuente sugerida:</strong> ${s.psu_suggested_watts || 750}W 80 PLUS</div>
+                        `;
+                    } else {
+                        autoDetectSummary.innerHTML = `
+                            <div style="font-weight: 800; color: #34D399; margin-bottom: 6px;">✓ Hardware detected successfully:</div>
+                            <div><strong>• Processor:</strong> ${s.cpu?.name || 'CPU'} (TDP ~${s.cpu?.tdp_watts || 120}W, ${s.cpu?.cores || 8} cores / ${s.cpu?.threads || 16} threads)</div>
+                            <div><strong>• Graphics Card:</strong> ${s.gpu?.name || 'GPU'} (TDP ~${s.gpu?.tdp_watts || 200}W, ~${s.gpu?.vram_gb || 8} GB VRAM)</div>
+                            <div><strong>• Display:</strong> ${s.monitor?.hz || 144} Hz • ${s.monitor?.preset || 'gaming_27_32'}</div>
+                            <div><strong>• Memory:</strong> ${s.ram?.sticks || 2} modules (${s.ram?.total_gb || 16} GB ${s.ram?.type || 'DDR4'} ${s.ram?.speed_mhz || 3200} MHz)</div>
+                            <div><strong>• Storage:</strong> NVMe SSD: ${s.storage?.nvme_drives ?? 2}, HDD: ${s.storage?.hdd_drives ?? 0}</div>
+                            <div><strong>• Motherboard:</strong> ${s.motherboard?.manufacturer || 'PC'} ${s.motherboard?.model || 'Motherboard'}</div>
+                            <div><strong>• Recommended PSU:</strong> ${s.psu_suggested_watts || 750}W 80 PLUS</div>
+                        `;
+                    }
+
+                    saveSettings();
+                    showToast(t.toastHardwareDetected);
+                } else {
+                    showToast(t.toastHardwareDetected);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(t.toastHardwareDetected);
+            } finally {
+                btnAutoDetect.disabled = false;
+                btnAutoDetect.innerText = t.autoDetectRepeatLabel;
+            }
+        });
+
+        // Window Controls & Apply Action
+        document.getElementById('btnToggleHud').addEventListener('click', () => window.api.toggleHud());
+
+        // Apply Button with Auto-Close Countdown
+        document.getElementById('btnApply').addEventListener('click', () => {
+            if (countdownTimer) {
+                resetApplyButton();
+                window.api.closeWindow();
+                return;
+            }
+
+            saveSettings();
+            const btn = document.getElementById('btnApply');
+            countdownSec = 3;
+            btn.innerText = DASHBOARD_I18N[currentConfig.language || 'en']?.closingIn?.(countdownSec) || `closing in: ${countdownSec}`;
+            btn.style.boxShadow = '0 0 12px rgba(56, 225, 163, 0.4)';
+
+            countdownTimer = setInterval(() => {
+                countdownSec--;
+                if (countdownSec > 0) {
+                    btn.innerText = `closing in: ${countdownSec}`;
+                } else {
+                    resetApplyButton();
+                    window.api.closeWindow();
+                }
+            }, 1000);
+        });
+
+        // Reset Session
+        document.getElementById('btnResetSession').addEventListener('click', () => {
+            const lang = currentConfig.language || 'en';
+            const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+            window.api.resetSession();
+            showToast(t.toastSessionReset);
+        });
+
+        // Regional Presets Mapping (Researched EIA 2026 & Utility Tariffs)
+        const presets = {
+            NYC_CONED: { sym: '$', tariff: 0.338 },
+            NYC_STATEN: { sym: '$', tariff: 0.220 },
+            US_AVG: { sym: '$', tariff: 0.183 },
+            US_CA: { sym: '$', tariff: 0.336 },
+            US_TX: { sym: '$', tariff: 0.159 },
+            US_FL: { sym: '$', tariff: 0.150 },
+            US_WA: { sym: '$', tariff: 0.115 },
+            US_HI: { sym: '$', tariff: 0.440 },
+            ES_MAD: { sym: '€', tariff: 0.198 },
+            RU_MSK: { sym: '₽', tariff: 6.50 },
+            RU_REG: { sym: '₽', tariff: 2.20 },
+            KZ_ALM: { sym: '₸', tariff: 28.00 },
+            EU_GER: { sym: '€', tariff: 0.395 },
+            UK_LON: { sym: '£', tariff: 0.265 }
+        };
+
+        document.getElementById('selectPresets').addEventListener('change', (e) => {
+            const p = presets[e.target.value];
+            if (p) {
+                document.getElementById('inputCurrency').value = p.sym;
+                document.getElementById('inputTariff').value = p.tariff;
+                saveSettings();
+            }
+        });
+
+        function syncConfigToUI(cfg) {
+            if (!cfg) return;
+            currentConfig = { ...currentConfig, ...cfg };
+            if (cfg.language !== undefined) {
+                currentConfig.language = cfg.language;
+                applyDashboardLanguage(cfg.language);
+            }
+            if (cfg.currency_symbol !== undefined) document.getElementById('inputCurrency').value = cfg.currency_symbol || '$';
+            if (cfg.tariff_per_kwh !== undefined) document.getElementById('inputTariff').value = cfg.tariff_per_kwh ?? 0.28;
+            if (cfg.rate_interval_minutes !== undefined) document.getElementById('inputRateMinutes').value = cfg.rate_interval_minutes || 60;
+            if (cfg.hud_mode !== undefined) document.getElementById('selectHudMode').value = cfg.hud_mode || 'normal';
+            if (cfg.monitor_hz !== undefined) document.getElementById('selectMonitorHz').value = String(cfg.monitor_hz || 144);
+            if (cfg.monitor_preset !== undefined) document.getElementById('selectMonitorPreset').value = cfg.monitor_preset || 'gaming_27_32';
+            if (cfg.cpu_tdp_watts !== undefined) document.getElementById('inputCpuTdp').value = cfg.cpu_tdp_watts ?? 120;
+            if (cfg.gpu_name !== undefined) document.getElementById('inputGpuName').value = cfg.gpu_name || '';
+            if (cfg.gpu_tdp_watts !== undefined) document.getElementById('inputGpuTdp').value = cfg.gpu_tdp_watts || 200;
+            if (cfg.cooling_type !== undefined) document.getElementById('selectCoolingType').value = cfg.cooling_type || 'aio';
+            if (cfg.case_fans !== undefined) document.getElementById('inputCaseFans').value = cfg.case_fans ?? 4;
+            if (cfg.rgb_lighting !== undefined) document.getElementById('selectRgb').value = cfg.rgb_lighting !== false ? 'true' : 'false';
+            if (cfg.ram_sticks !== undefined) document.getElementById('selectRamSticks').value = String(cfg.ram_sticks || 2);
+            if (cfg.nvme_drives !== undefined) document.getElementById('inputNvme').value = cfg.nvme_drives ?? 2;
+            if (cfg.hdd_drives !== undefined) document.getElementById('inputHdd').value = cfg.hdd_drives ?? 0;
+            if (cfg.psu_rated_watts !== undefined) document.getElementById('inputPsuWatts').value = cfg.psu_rated_watts || 850;
+            if (cfg.psu_cert !== undefined) document.getElementById('selectPsuCert').value = cfg.psu_cert || 'gold';
+            if (cfg.hud_interval_sec !== undefined) document.getElementById('selectHudInterval').value = String(cfg.hud_interval_sec || 2);
+            if (cfg.hud_show_power !== undefined) document.getElementById('checkHudPower').checked = cfg.hud_show_power !== false;
+            if (cfg.hud_show_rate !== undefined) document.getElementById('checkHudRate').checked = cfg.hud_show_rate !== false;
+            if (cfg.hud_show_avg !== undefined) document.getElementById('checkHudAvg').checked = cfg.hud_show_avg === true;
+            if (cfg.hud_show_session !== undefined) document.getElementById('checkHudSession').checked = cfg.hud_show_session !== false;
+            if (cfg.hud_always_on_top !== undefined) document.getElementById('checkAlwaysOnTop').checked = cfg.hud_always_on_top ?? true;
+            if (cfg.smooth_numbers !== undefined) document.getElementById('checkSmoothNumbers').checked = cfg.smooth_numbers === true;
+
+            // Opacity slider
+            if (cfg.hud_opacity !== undefined) {
+                const op = parseInt(cfg.hud_opacity, 10) || 100;
+                document.getElementById('inputHudOpacity').value = op;
+                document.getElementById('labelHudOpacity').innerText = op + '%';
+            }
+            // Click-through
+            if (cfg.hud_click_through !== undefined) {
+                document.getElementById('checkClickThrough').checked = !!cfg.hud_click_through;
+            }
+            // Autostart
+            if (cfg.autostart !== undefined) {
+                document.getElementById('checkAutostart').checked = cfg.autostart !== false;
+            }
+            if (cfg.hud_on_startup !== undefined) {
+                document.getElementById('checkHudOnStartup').checked = cfg.hud_on_startup !== false;
+            }
+        }
+
+        // Auto Save Inputs
+        function saveSettings() {
+            const lang = currentConfig.language || 'en';
+            const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+            const newConfig = {
+                language: document.getElementById('selectLanguage').value || currentConfig.language || 'en',
+                currency_symbol: document.getElementById('inputCurrency').value.trim() || '$',
+                tariff_per_kwh: parseFloat(document.getElementById('inputTariff').value) || 0.28,
+                rate_interval_minutes: parseInt(document.getElementById('inputRateMinutes').value, 10) || 60,
+                hud_mode: document.getElementById('selectHudMode').value || currentConfig.hud_mode || 'normal',
+                monitor_hz: parseInt(document.getElementById('selectMonitorHz').value, 10) || 144,
+                monitor_preset: document.getElementById('selectMonitorPreset').value || 'gaming_27_32',
+                cpu_tdp_watts: parseFloat(document.getElementById('inputCpuTdp').value) || 120,
+                gpu_name: document.getElementById('inputGpuName').value,
+                gpu_tdp_watts: parseFloat(document.getElementById('inputGpuTdp').value) || 200,
+                cooling_type: document.getElementById('selectCoolingType').value || 'aio',
+                case_fans: parseInt(document.getElementById('inputCaseFans').value, 10) || 4,
+                rgb_lighting: document.getElementById('selectRgb').value === 'true',
+                ram_sticks: parseInt(document.getElementById('selectRamSticks').value, 10) || 2,
+                nvme_drives: parseInt(document.getElementById('inputNvme').value, 10) || 2,
+                hdd_drives: parseInt(document.getElementById('inputHdd').value, 10) || 0,
+                psu_rated_watts: parseInt(document.getElementById('inputPsuWatts').value, 10) || 850,
+                psu_cert: document.getElementById('selectPsuCert').value || 'gold',
+                hud_interval_sec: parseInt(document.getElementById('selectHudInterval').value, 10) || 2,
+                hud_show_power: document.getElementById('checkHudPower').checked,
+                hud_show_rate: document.getElementById('checkHudRate').checked,
+                hud_show_avg: document.getElementById('checkHudAvg').checked,
+                hud_show_session: document.getElementById('checkHudSession').checked,
+                hud_always_on_top: document.getElementById('checkAlwaysOnTop').checked,
+                smooth_numbers: document.getElementById('checkSmoothNumbers').checked,
+                hud_opacity: parseInt(document.getElementById('inputHudOpacity').value, 10) || 100,
+                hud_click_through: document.getElementById('checkClickThrough').checked,
+                autostart: document.getElementById('checkAutostart').checked,
+                hud_on_startup: document.getElementById('checkHudOnStartup').checked
+            };
+            currentConfig = { ...currentConfig, ...newConfig };
+            window.api.updateConfig(newConfig);
+            showToast(t.toastSettingsSaved);
+            if (lastMetrics) renderMetrics(lastMetrics);
+        }
+
+        const inputIds = [
+            'selectLanguage', 'inputCurrency', 'inputTariff', 'inputRateMinutes', 'selectHudMode',
+            'selectMonitorHz', 'selectMonitorPreset', 'inputCpuTdp', 'inputGpuName',
+            'inputGpuTdp', 'selectCoolingType', 'inputCaseFans', 'selectRgb',
+            'selectRamSticks', 'inputNvme', 'inputHdd', 'inputPsuWatts',
+            'selectPsuCert', 'selectHudInterval', 'checkHudPower', 'checkHudRate',
+            'checkHudAvg', 'checkHudSession', 'checkAlwaysOnTop', 'checkSmoothNumbers',
+            'inputHudOpacity', 'checkClickThrough', 'checkAutostart', 'checkHudOnStartup'
+        ];
+
+        inputIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', saveSettings);
+        });
+
+        // Opacity live slider display
+        const inputHudOpacity = document.getElementById('inputHudOpacity');
+        if (inputHudOpacity) {
+            inputHudOpacity.addEventListener('input', (e) => {
+                document.getElementById('labelHudOpacity').innerText = e.target.value + '%';
+            });
+        }
+
+        // Load Initial Config
+        window.api.getConfig().then(cfg => {
+            syncConfigToUI(cfg);
+        });
+
+        // Keep UI synchronized with config changes from HUD or shortcuts
+        if (window.api.onConfigChanged) {
+            window.api.onConfigChanged((cfg) => {
+                syncConfigToUI(cfg);
+            });
+        }
+
+        // On window focus or tab visibility, always re-sync config so hud_mode is fresh and reset apply button
+        window.addEventListener('focus', () => {
+            resetApplyButton();
+            window.api.getConfig().then(syncConfigToUI);
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                resetApplyButton();
+                window.api.getConfig().then(syncConfigToUI);
+            }
+        });
+        if (window.api.onResetApply) {
+            window.api.onResetApply(() => {
+                resetApplyButton();
+            });
+        }
+
+        const btnLaunchWizard = document.getElementById('btnLaunchWizard');
+        if (btnLaunchWizard) {
+            btnLaunchWizard.addEventListener('click', () => {
+                if (window.api.launchOnboarding) {
+                    window.api.launchOnboarding();
+                }
+            });
+        }
+
+        // Number animation state map
+        const dashAnimMap = new Map();
+
+        function setAnimatedVal(el, targetVal, formatter) {
+            if (!el) return;
+            const isSmooth = !!currentConfig.smooth_numbers;
+            if (!isSmooth) {
+                if (dashAnimMap.has(el)) {
+                    cancelAnimationFrame(dashAnimMap.get(el).rafId);
+                    dashAnimMap.delete(el);
+                }
+                el.dataset.val = targetVal;
+                el.innerText = formatter(targetVal);
+                return;
+            }
+
+            const current = parseFloat(el.dataset.val);
+            if (isNaN(current)) {
+                el.dataset.val = targetVal;
+                el.innerText = formatter(targetVal);
+                return;
+            }
+
+            if (Math.abs(current - targetVal) < 0.001) {
+                el.innerText = formatter(targetVal);
+                return;
+            }
+
+            if (dashAnimMap.has(el)) {
+                cancelAnimationFrame(dashAnimMap.get(el).rafId);
+            }
+
+            const startTime = performance.now();
+            const duration = 260; // 260ms smooth swift interpolation
+
+            function frame(now) {
+                const elapsed = now - startTime;
+                const p = Math.min(1, elapsed / duration);
+                const ease = 1 - (1 - p) * (1 - p); // easeOutQuad
+                const v = current + (targetVal - current) * ease;
+                el.innerText = formatter(v);
+
+                if (p < 1) {
+                    const rafId = requestAnimationFrame(frame);
+                    dashAnimMap.set(el, { rafId, v });
+                } else {
+                    el.dataset.val = targetVal;
+                    el.innerText = formatter(targetVal);
+                    dashAnimMap.delete(el);
+                }
+            }
+
+            const rafId = requestAnimationFrame(frame);
+            dashAnimMap.set(el, { rafId, v: current });
+        }
+
+        // Render Telemetry
+        function renderMetrics(m) {
+            lastMetrics = m;
+            const lang = currentConfig.language || 'en';
+            const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+            const sym = currentConfig.currency_symbol || '$';
+            const tariff = currentConfig.tariff_per_kwh || 0.28;
+            const totWatts = Math.max(1, m.total_watts);
+            const rateMin = m.rate_minutes || currentConfig.rate_interval_minutes || 60;
+            const rateVal = m.rate_cost ?? m.cost_per_hour;
+            const avgRateVal = m.rate_avg_cost ?? m.avg_cost_per_hour;
+
+            // Hero
+            setAnimatedVal(document.getElementById('heroWatts'), totWatts, (w) => (w >= 100 ? Math.round(w) : w.toFixed(1)) + ' W');
+            setAnimatedVal(document.getElementById('heroRate'), rateVal, (v) => formatCurrency(v, sym, true, rateMin));
+            setAnimatedVal(document.getElementById('heroAvgRate'), avgRateVal, (v) => formatCurrency(v, sym, true, rateMin));
+            setAnimatedVal(document.getElementById('heroSpent'), m.session_cost, (v) => formatCurrency(v, sym, false));
+
+            document.getElementById('heroBar').style.width = Math.min(100, Math.round((totWatts / 600) * 100)) + '%';
+            document.getElementById('heroEnergy').innerText = t.heroEnergyText(m.session_kwh);
+            document.getElementById('heroAvgWatts').innerText = t.heroAvgWattsText(m.avg_watts);
+            document.getElementById('uptimeBadge').innerText = formatSeconds(m.session_duration_sec);
+
+            // Subtags
+            document.getElementById('heroSubtagRate').innerText = (rateMin === 60) ? t.heroSubtagRateHour : t.heroSubtagRateMin(rateMin);
+            document.getElementById('heroSubtagAvg').innerText = (rateMin === 60) ? t.heroSubtagAvgHour : t.heroSubtagAvgMin(rateMin);
+
+            // 1. GPU
+            const gpuPct = Math.round((m.gpu_watts / totWatts) * 100);
+            const gpuCost = (m.gpu_watts / 1000.0) * tariff * (rateMin / 60.0);
+            const estSuffix = (lang === 'ru') ? ' (TDP расчёт)' : (lang === 'es' ? ' (TDP estimado)' : ' (TDP estimated)');
+            document.getElementById('gpuModel').innerText = m.gpu_name + (m.gpu_is_estimated ? estSuffix : '');
+            setAnimatedVal(document.getElementById('gpuWatts'), m.gpu_watts, (w) => w.toFixed(1) + ' W');
+            document.getElementById('gpuPct').innerText = `(${gpuPct}%)`;
+            setAnimatedVal(document.getElementById('gpuCost'), gpuCost, (c) => formatCurrency(c, sym, true, rateMin));
+            document.getElementById('gpuBar').style.width = Math.max(2, gpuPct) + '%';
+            document.getElementById('gpuDetails').innerText = m.gpu_is_estimated
+                ? t.gpuDetailsEstimated(m.gpu_load_pct, currentConfig.gpu_tdp_watts || 200, gpuPct)
+                : t.gpuDetailsDirect(m.gpu_load_pct, m.gpu_temp_c, gpuPct);
+
+            // 2. CPU
+            const cpuPct = Math.round((m.cpu_watts / totWatts) * 100);
+            const cpuCost = (m.cpu_watts / 1000.0) * tariff * (rateMin / 60.0);
+            document.getElementById('cpuModel').innerText = m.cpu_name;
+            setAnimatedVal(document.getElementById('cpuWatts'), m.cpu_watts, (w) => w.toFixed(1) + ' W');
+            document.getElementById('cpuPct').innerText = `(${cpuPct}%)`;
+            setAnimatedVal(document.getElementById('cpuCost'), cpuCost, (c) => formatCurrency(c, sym, true, rateMin));
+            document.getElementById('cpuBar').style.width = cpuPct + '%';
+            document.getElementById('cpuDetails').innerText = t.cpuDetails(m.cpu_load_pct, currentConfig.cpu_tdp_watts || 120, cpuPct);
+
+            // 3. Monitor
+            const monPct = Math.round((m.monitor_watts / totWatts) * 100);
+            const monCost = (m.monitor_watts / 1000.0) * tariff * (rateMin / 60.0);
+            const presetNames = {
+                std_24: '24" FHD',
+                gaming_27_32: '27"-32" Gaming',
+                ultrawide_oled: '34"+ Ultrawide/OLED'
+            };
+            const pName = presetNames[m.monitor_preset] || 'Gaming Panel';
+            document.getElementById('monitorModel').innerText = `${pName} • ${m.monitor_hz} Hz`;
+            setAnimatedVal(document.getElementById('monitorWatts'), m.monitor_watts, (w) => w.toFixed(1) + ' W');
+            document.getElementById('monitorPct').innerText = `(${monPct}%)`;
+            setAnimatedVal(document.getElementById('monitorCost'), monCost, (c) => formatCurrency(c, sym, true, rateMin));
+            document.getElementById('monitorBar').style.width = monPct + '%';
+            document.getElementById('monitorDetails').innerText = t.monitorDetails(m.monitor_hz, monPct);
+
+            // 4. Peripherals (RAM, SSD, Fans, Pump, RGB)
+            const periphPct = Math.round((m.peripherals_watts / totWatts) * 100);
+            const periphCost = (m.peripherals_watts / 1000.0) * tariff * (rateMin / 60.0);
+            const periphTitle = (lang === 'ru')
+                ? `ОЗУ (${m.ram_watts}W) + Диски (${m.storage_watts}W) + Кулеры (${m.cooling_watts}W)`
+                : (lang === 'es'
+                    ? `RAM (${m.ram_watts}W) + Discos (${m.storage_watts}W) + Vent. (${m.cooling_watts}W)`
+                    : `RAM (${m.ram_watts}W) + Drives (${m.storage_watts}W) + Cooling (${m.cooling_watts}W)`);
+            document.getElementById('periphModel').innerText = periphTitle;
+            setAnimatedVal(document.getElementById('periphWatts'), m.peripherals_watts, (w) => w.toFixed(1) + ' W');
+            document.getElementById('periphPct').innerText = `(${periphPct}%)`;
+            setAnimatedVal(document.getElementById('periphCost'), periphCost, (c) => formatCurrency(c, sym, true, rateMin));
+            document.getElementById('periphBar').style.width = periphPct + '%';
+            document.getElementById('periphDetails').innerText = t.periphDetails(m);
+
+            // 5. PSU 80 PLUS Curve
+            const psuLossWatts = Math.max(0, m.pc_wall_watts - m.internal_dc_watts);
+            document.getElementById('psuModel').innerText = `${m.psu_rated_watts}W ${m.psu_cert.toUpperCase()} (80 PLUS)`;
+            document.getElementById('psuEffVal').innerText = t.psuEff(m.psu_efficiency_pct);
+            setAnimatedVal(document.getElementById('psuLoss'), psuLossWatts, (w) => t.psuLoss(w));
+            document.getElementById('psuBar').style.width = Math.min(100, Math.round(m.psu_efficiency_pct)) + '%';
+
+            // 6. Active Game Live Stats in Game Tracker
+            if (m.active_game) {
+                renderActiveGame(m.active_game);
+            } else {
+                renderActiveGame(null);
+            }
+        }
+
+        // Active Game rendering in Game Tracker tab
+        function renderActiveGame(game) {
+            const lang = currentConfig.language || 'en';
+            const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+            const gameHeroTag = document.getElementById('gameHeroTag');
+            const gameDurationBadge = document.getElementById('gameDurationBadge');
+            const gameActiveBody = document.getElementById('gameActiveBody');
+            const gameIdleBody = document.getElementById('gameIdleBody');
+            const activeGameTitle = document.getElementById('activeGameTitle');
+
+            if (game && game.is_active) {
+                gameHeroTag.innerText = t.gameActiveHeroTag(game.name);
+                gameDurationBadge.innerText = formatSeconds(game.duration_sec);
+                activeGameTitle.innerText = game.name;
+                gameActiveBody.style.display = 'block';
+                gameIdleBody.style.display = 'none';
+
+                setAnimatedVal(document.getElementById('gameLiveWatts'), game.current_watts, (w) => (w >= 100 ? Math.round(w) : w.toFixed(1)) + ' W');
+                setAnimatedVal(document.getElementById('gameLiveSpent'), game.cost, (c) => formatCurrency(c, currentConfig.currency_symbol, false));
+                setAnimatedVal(document.getElementById('gameLiveAvg'), game.avg_watts, (w) => Math.round(w) + ' W');
+
+                const gpuInfo = `${Math.round(game.gpu_watts)} W (${game.gpu_load_pct}%)`;
+                document.getElementById('gameLiveGpu').innerText = gpuInfo;
+                document.getElementById('gameLiveKwh').innerText = t.gameLiveKwhText(game.kwh);
+                document.getElementById('gameLiveTemp').innerText = t.gameLiveGpuText(game.gpu_temp_c, game.avg_gpu_watts, game.avg_gpu_load_pct);
+            } else {
+                gameHeroTag.innerText = t.gameIdleHeroTag;
+                gameDurationBadge.innerText = '⏱ 00:00:00';
+                gameActiveBody.style.display = 'none';
+                gameIdleBody.style.display = 'flex';
+            }
+        }
+
+        async function loadGameHistory() {
+            try {
+                if (window.api.getGameHistory) {
+                    const sessions = await window.api.getGameHistory();
+                    lastSessions = sessions || [];
+                    renderGameHistoryList(lastSessions);
+                }
+            } catch (e) {
+                console.error('Error loading game history:', e);
+            }
+        }
+
+        function renderGameHistoryList(sessions) {
+            lastSessions = sessions || [];
+            const lang = currentConfig.language || 'en';
+            const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+            const listEl = document.getElementById('gameSessionsList');
+            const totalCountEl = document.getElementById('gameTotalSessionsCount');
+            const totalHoursEl = document.getElementById('statTotalGameHours');
+            const totalCostEl = document.getElementById('statTotalGameCost');
+            const totalKwhEl = document.getElementById('statTotalGameKwh');
+            const avgWattsEl = document.getElementById('statAvgGameWatts');
+
+            if (!listEl) return;
+
+            if (!sessions || sessions.length === 0) {
+                totalCountEl.innerText = (lang === 'ru') ? '0 сессий' : (lang === 'es' ? '0 sesiones' : '0 sessions');
+                totalHoursEl.innerText = (lang === 'ru') ? '0ч 00м' : (lang === 'es' ? '0h 00m' : '0h 00m');
+                totalCostEl.innerText = formatCurrency(0, currentConfig.currency_symbol, false);
+                totalKwhEl.innerText = (lang === 'ru') ? '0.00 кВт⋅ч' : '0.00 kWh';
+                avgWattsEl.innerText = '0 W';
+
+                listEl.innerHTML = `
+                    <div style="padding: 24px; text-align: center; background: rgba(18, 25, 40, 0.4); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 10px; color: var(--text-muted); font-size: 12px;">
+                        ${t.emptyHistoryMsg}
+                    </div>
+                `;
+                return;
+            }
+
+            totalCountEl.innerText = (lang === 'ru') ? `${sessions.length} сессий` : (lang === 'es' ? `${sessions.length} sesiones` : `${sessions.length} sessions`);
+
+            let sumSec = 0;
+            let sumCost = 0;
+            let sumKwh = 0;
+            let sumWatts = 0;
+
+            const costLabel = (lang === 'ru') ? 'Затраты:' : (lang === 'es' ? 'Coste:' : 'Cost:');
+            const energyLabel = (lang === 'ru') ? 'Энергия:' : (lang === 'es' ? 'Energía:' : 'Energy:');
+            const avgPowerLabel = (lang === 'ru') ? 'Ср. мощность:' : (lang === 'es' ? 'Potencia media:' : 'Avg Power:');
+            const kwhUnit = (lang === 'ru') ? 'кВт⋅ч' : 'kWh';
+
+            const html = sessions.map(s => {
+                sumSec += s.duration_sec;
+                sumCost += s.cost;
+                sumKwh += s.kwh;
+                sumWatts += s.avg_watts;
+
+                const hrs = Math.floor(s.duration_sec / 3600);
+                const mins = Math.floor((s.duration_sec % 3600) / 60);
+                const durationStr = (lang === 'ru')
+                    ? (hrs > 0 ? `${hrs}ч ${mins}м` : `${mins} мин`)
+                    : (lang === 'es'
+                        ? (hrs > 0 ? `${hrs}h ${mins}m` : `${mins} min`)
+                        : (hrs > 0 ? `${hrs}h ${mins}m` : `${mins} min`));
+
+                return `
+                    <div class="game-session-item">
+                        <div class="game-session-top">
+                            <div class="game-session-title">
+                                <span style="color: #38BDF8;">🎮</span>
+                                <span>${s.name}</span>
+                                <span class="uptime-badge" style="font-size: 10px; padding: 1px 6px;">${durationStr}</span>
+                            </div>
+                            <div class="game-session-date">${s.date}</div>
+                        </div>
+                        <div class="game-session-stats">
+                            <span>${costLabel} <strong style="color: #34D399;">${formatCurrency(s.cost, currentConfig.currency_symbol, false)}</strong></span>
+                            <span>${energyLabel} <strong style="color: #F8FAFC;">${s.kwh.toFixed(3)} ${kwhUnit}</strong></span>
+                            <span>${avgPowerLabel} <strong style="color: #38BDF8;">${s.avg_watts} W</strong></span>
+                            <span>GPU: <strong style="color: #A78BFA;">${s.avg_gpu_watts} W (${s.avg_gpu_load}%)</strong></span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            listEl.innerHTML = html;
+
+            const totHrs = Math.floor(sumSec / 3600);
+            const totMins = Math.floor((sumSec % 3600) / 60);
+            totalHoursEl.innerText = (lang === 'ru')
+                ? `${totHrs}ч ${String(totMins).padStart(2, '0')}м`
+                : `${totHrs}h ${String(totMins).padStart(2, '0')}m`;
+            totalCostEl.innerText = formatCurrency(sumCost, currentConfig.currency_symbol, false);
+            totalKwhEl.innerText = (lang === 'ru') ? `${sumKwh.toFixed(2)} кВт⋅ч` : `${sumKwh.toFixed(2)} kWh`;
+            avgWattsEl.innerText = `${Math.round(sumWatts / sessions.length)} W`;
+        }
+
+        const btnClear = document.getElementById('btnClearGameHistory');
+        if (btnClear) {
+            btnClear.addEventListener('click', async () => {
+                const lang = currentConfig.language || 'en';
+                const t = DASHBOARD_I18N[lang] || DASHBOARD_I18N.en;
+                if (confirm(t.confirmClearHistory)) {
+                    if (window.api.clearGameHistory) {
+                        await window.api.clearGameHistory();
+                        loadGameHistory();
+                        showToast(t.toastHistoryCleared);
+                    }
+                }
+            });
+        }
+
+        if (window.api.onGameHistoryUpdated) {
+            window.api.onGameHistoryUpdated((sessions) => {
+                renderGameHistoryList(sessions);
+            });
+        }
+
+        // Initial load of game history
+        loadGameHistory();
+
+        window.api.onTelemetry(renderMetrics);
+    </script>
+</body>
+</html>

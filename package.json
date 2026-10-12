@@ -1,0 +1,74 @@
+{
+  "name": "power-cost-monitor",
+  "version": "1.0.0",
+  "description": "Real-time PC Power & Electricity Cost Desktop Monitor with Gaming HUD Overlay",
+  "main": "main.js",
+  "author": {
+    "name": "notniko",
+    "url": "https://notniko.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imnikoooo/PCM.git"
+  },
+  "bugs": {
+    "url": "https://github.com/imnikoooo/PCM/issues"
+  },
+  "homepage": "https://github.com/imnikoooo/PCM#readme",
+  "keywords": [
+    "electron",
+    "power-monitor",
+    "electricity-cost",
+    "gaming-overlay",
+    "hardware-monitor",
+    "watt-meter",
+    "directx-overlay",
+    "material-you",
+    "roblox",
+    "watch-dogs-2"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "dist:portable": "electron-builder --win portable",
+    "dist:nsis": "electron-builder --win nsis"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.7.1"
+  },
+  "build": {
+    "appId": "com.notniko.powercostmonitor",
+    "productName": "Power Cost Monitor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "telemetry.js",
+      "hardwareDetector.js",
+      "gameTracker.js",
+      "hud.html",
+      "dashboard.html",
+      "onboarding.html",
+      "styles.css",
+      "config.json"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Power Cost Monitor"
+    }
+  }
+}

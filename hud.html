@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUD Overlay</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: transparent;
+            margin: 0;
+            padding: 4px;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Main Pill Shell - Crisp Border, Absolutely No Outer Shadow */
+        .hud-pill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(15, 22, 35, 0.96) 0%, rgba(9, 14, 23, 0.98) 100%);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 14px;
+            box-shadow: none !important;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.2s ease;
+            cursor: grab;
+            position: relative;
+        }
+
+        .hud-pill:hover {
+            border-color: rgba(16, 185, 129, 0.55);
+            box-shadow: none !important;
+        }
+
+        .hud-pill:active {
+            cursor: grabbing;
+        }
+
+        /* Top Row in Full Mode */
+        .hud-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hud-top-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hud-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(16, 185, 129, 0.14);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            border-radius: 6px;
+            padding: 1px 6px;
+        }
+
+        .hud-badge-text {
+            color: var(--accent-mint-light);
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+        }
+
+        .hud-top-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hud-icon-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 20px;
+            line-height: 1;
+        }
+
+        .hud-icon-btn:hover {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: var(--accent-mint);
+            color: #FFFFFF;
+        }
+
+        /* Full Mode Metrics */
+        .hud-metrics {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .metric-col {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        .val-power {
+            color: var(--accent-mint);
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .val-rate {
+            color: var(--accent-cyan);
+            font-size: 12.5px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .val-avg {
+            color: #A78BFA;
+            font-size: 12.5px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .val-spent {
+            color: var(--text-primary);
+            font-size: 12.5px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .metric-tag {
+            color: var(--text-muted);
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hud-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .hud-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981 0%, #38BDF8 70%, #F59E0B 100%);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.35s ease;
+        }
+
+        /* Mini Mode (Compact Floating Cube - High Contrast & Crisp Readability) */
+        .mini-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .mini-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mini-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 1px;
+        }
+
+        .mini-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+        }
+
+        .mini-val-power {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--accent-mint);
+            line-height: 1.05;
+        }
+
+        .mini-val-spent {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #FFFFFF;
+            line-height: 1.1;
+        }
+
+        .mini-tag {
+            font-size: 8px;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-pill drag-region" id="hudPill" title="Double-click to open dashboard. Drag to move.">
+        <!-- Click-Through Toast Notification Overlay -->
+        <div id="clickThroughToast" style="display: none; position: absolute; inset: 0; background: rgba(11, 16, 26, 0.95); border-radius: 13px; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #38BDF8; text-align: center; padding: 4px 8px; z-index: 100; pointer-events: none; border: 1px solid rgba(56, 189, 248, 0.4);">
+            🖱️ Click-Through Mode (Ctrl+Shift+X)
+        </div>
+
+        <!-- 1. FULL PILL MODE -->
+        <div id="fullView" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; width: 100%;">
+            <!-- Top Bar -->
+            <div class="hud-top">
+                <div class="hud-top-left">
+                    <div class="hud-badge" id="liveBadge">
+                        <div class="pulse-dot"></div>
+                        <span class="hud-badge-text" id="liveBadgeText">LIVE</span>
+                    </div>
+                    <div class="hud-badge" id="gameBadge" style="display: none; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span style="font-size: 8px;">🎮</span>
+                        <span class="hud-badge-text" id="gameBadgeText" style="color: #38BDF8; font-size: 8px;">GAME</span>
+                    </div>
+                </div>
+                <div class="hud-top-actions no-drag">
+                    <button class="hud-icon-btn" id="btnToggleMode" title="Switch to compact Mini mode">⛶ Mini</button>
+                    <button class="hud-icon-btn" id="btnDetails" title="Open full dashboard & settings">Details ↗</button>
+                </div>
+            </div>
+
+            <!-- Metrics Columns (Configurable in Settings) -->
+            <div class="hud-metrics">
+                <div class="metric-col" id="colWatts">
+                    <span class="val-power tnum" id="valWatts">--- W</span>
+                    <span class="metric-tag" id="tagPower">POWER</span>
+                </div>
+                <div class="metric-col" id="colRate">
+                    <span class="val-rate tnum" id="valRate">$0.00/hr</span>
+                    <span class="metric-tag" id="tagRate">RATE</span>
+                </div>
+                <div class="metric-col" id="colAvgRate" style="display: none;">
+                    <span class="val-avg tnum" id="valAvgRate">$0.00/hr</span>
+                    <span class="metric-tag" id="tagAvgRate">AVG/HR</span>
+                </div>
+                <div class="metric-col" id="colSpent">
+                    <span class="val-spent tnum" id="valSpent">$0.00</span>
+                    <span class="metric-tag" id="tagSession">SESSION</span>
+                </div>
+            </div>
+
+            <!-- Capsule Load Bar -->
+            <div class="hud-bar">
+                <div class="hud-bar-fill" id="valBar"></div>
+            </div>
+        </div>
+
+        <!-- 2. MINI CUBE MODE (Watts + Session, Ultra High Contrast) -->
+        <div class="mini-view" id="miniView">
+            <div class="mini-top">
+                <div class="hud-badge" style="padding: 1px 4px;">
+                    <div class="pulse-dot" style="width: 5px; height: 5px;"></div>
+                </div>
+                <div class="hud-top-actions no-drag">
+                    <button class="hud-icon-btn" id="btnExpandMode" title="Expand to full widget" style="padding: 1px 5px; height: 18px;">⤢ Full</button>
+                    <button class="hud-icon-btn" id="btnMiniDetails" title="Open dashboard" style="padding: 1px 5px; height: 18px;">↗</button>
+                </div>
+            </div>
+
+            <div class="mini-metrics">
+                <div class="mini-row">
+                    <span class="mini-val-power tnum" id="miniWatts">0 W</span>
+                    <span class="mini-tag" id="miniTagPower">PWR</span>
+                </div>
+                <div class="mini-row" style="margin-top: 1px;">
+                    <span class="mini-val-spent tnum" id="miniSpent">$0.00</span>
+                    <span class="mini-tag" id="miniTagSpent">SPENT</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentConfig = {};
+        let currentSymbol = '$';
+        let lastMetrics = null;
+
+        const HUD_I18N = {
+            en: {
+                live: 'LIVE',
+                btnMini: '⛶ Mini',
+                btnDetails: 'Details ↗',
+                btnExpand: '⤢ Full',
+                tagPower: 'POWER',
+                tagRate: (m) => (m === 60 ? 'RATE' : `${m}M RATE`),
+                tagAvgRate: (m) => (m === 60 ? 'AVG/HR' : `AVG/${m}M`),
+                tagSession: 'SESSION',
+                miniTagPower: 'PWR',
+                miniTagSpent: 'SPENT',
+                gameFallback: 'GAME',
+                tipPill: 'Double-click to open dashboard. Drag to move.',
+                tipBtnToggleMini: 'Switch to compact Mini mode',
+                tipBtnDetails: 'Open full dashboard & settings',
+                tipBtnExpand: 'Expand to full widget',
+                tipBtnMiniDetails: 'Open dashboard',
+                tipGameBadge: (name, cost) => `In-game: ${name} (Cost: ${cost})`,
+                toastClickThroughOn: '🖱️ Click-Through: ON (Ctrl+Shift+X)',
+                toastClickThroughOff: '🖱️ Click-Through: OFF'
+            },
+            ru: {
+                live: 'LIVE',
+                btnMini: '⛶ Мини',
+                btnDetails: 'Панель ↗',
+                btnExpand: '⤢ Полный',
+                tagPower: 'МОЩНОСТЬ',
+                tagRate: (m) => (m === 60 ? 'ТАРИФ/Ч' : `${m}М ТАРИФ`),
+                tagAvgRate: (m) => (m === 60 ? 'СРЕД/Ч' : `СРЕД/${m}М`),
+                tagSession: 'СЕССИЯ',
+                miniTagPower: 'ВАТТ',
+                miniTagSpent: 'ИТОГ',
+                gameFallback: 'ИГРА',
+                tipPill: 'Двойной клик — открыть дашборд. Перетаскивайте мышкой.',
+                tipBtnToggleMini: 'Переключить в компактный мини-режим',
+                tipBtnDetails: 'Развернуть полный дашборд и настройки',
+                tipBtnExpand: 'Вернуть полный виджет',
+                tipBtnMiniDetails: 'Открыть дашборд',
+                tipGameBadge: (name, cost) => `В игре: ${name} (Затраты: ${cost})`,
+                toastClickThroughOn: '🖱️ Сквозные клики: ВКЛ (Ctrl+Shift+X)',
+                toastClickThroughOff: '🖱️ Сквозные клики: ВЫКЛ'
+            },
+            es: {
+                live: 'VIVO',
+                btnMini: '⛶ Mini',
+                btnDetails: 'Panel ↗',
+                btnExpand: '⤢ Completo',
+                tagPower: 'POTENCIA',
+                tagRate: (m) => (m === 60 ? 'TARIFA/H' : `${m}M TARIFA`),
+                tagAvgRate: (m) => (m === 60 ? 'MED/H' : `MED/${m}M`),
+                tagSession: 'SESIÓN',
+                miniTagPower: 'POT',
+                miniTagSpent: 'GASTO',
+                gameFallback: 'JUEGO',
+                tipPill: 'Doble clic para abrir panel. Arrastra para mover.',
+                tipBtnToggleMini: 'Cambiar a modo Mini compacto',
+                tipBtnDetails: 'Abrir panel de control completo y ajustes',
+                tipBtnExpand: 'Expandir a widget completo',
+                tipBtnMiniDetails: 'Abrir panel de control',
+                tipGameBadge: (name, cost) => `En juego: ${name} (Coste: ${cost})`,
+                toastClickThroughOn: '🖱️ Clics transparentes: ACTIVADO (Ctrl+Shift+X)',
+                toastClickThroughOff: '🖱️ Clics transparentes: DESACTIVADO'
+            }
+        };
+
+        function formatCurrency(val, symbol, isRate, rateMinutes) {
+            symbol = (symbol || '$').trim();
+            rateMinutes = rateMinutes || currentConfig.rate_interval_minutes || 60;
+            const lang = currentConfig.language || 'en';
+            const isPostfix = ['₽', '₸', '₴', '€'].includes(symbol) || symbol.length > 1;
+            if (isRate) {
+                const dec = val < 1.0 ? 3 : 2;
+                const s = val.toFixed(dec);
+                let unit = '/hr';
+                if (lang === 'ru' || ['₽', '₸', '₴'].includes(symbol)) {
+                    unit = rateMinutes === 60 ? '/ч' : `/${rateMinutes}м`;
+                } else if (lang === 'es') {
+                    unit = rateMinutes === 60 ? '/h' : `/${rateMinutes}min`;
+                } else {
+                    unit = rateMinutes === 60 ? '/hr' : `/${rateMinutes}m`;
+                }
+                return isPostfix ? `${s} ${symbol}${unit}` : `${symbol}${s}${unit}`;
+            } else {
+                const s = val.toFixed(2);
+                return isPostfix ? `${s} ${symbol}` : `${symbol}${s}`;
+            }
+        }
+
+        function applyMode(mode) {
+            const fullView = document.getElementById('fullView');
+            const miniView = document.getElementById('miniView');
+            const hudPill = document.getElementById('hudPill');
+
+            if (mode === 'mini') {
+                fullView.style.display = 'none';
+                miniView.style.display = 'flex';
+                hudPill.style.padding = '6px 8px';
+            } else {
+                fullView.style.display = 'flex';
+                miniView.style.display = 'none';
+                hudPill.style.padding = '8px 12px';
+            }
+        }
+
+        function applyHudLanguage(cfg) {
+            const lang = ['ru', 'es'].includes(cfg.language) ? cfg.language : 'en';
+            const t = HUD_I18N[lang] || HUD_I18N.en;
+
+            // Buttons
+            const btnToggle = document.getElementById('btnToggleMode');
+            if (btnToggle) {
+                btnToggle.innerText = t.btnMini;
+                btnToggle.title = t.tipBtnToggleMini;
+            }
+            const btnDetails = document.getElementById('btnDetails');
+            if (btnDetails) {
+                btnDetails.innerText = t.btnDetails;
+                btnDetails.title = t.tipBtnDetails;
+            }
+            const btnExpand = document.getElementById('btnExpandMode');
+            if (btnExpand) {
+                btnExpand.innerText = t.btnExpand;
+                btnExpand.title = t.tipBtnExpand;
+            }
+            const btnMiniDetails = document.getElementById('btnMiniDetails');
+            if (btnMiniDetails) {
+                btnMiniDetails.title = t.tipBtnMiniDetails;
+            }
+
+            // Shell Tooltip
+            const hudPill = document.getElementById('hudPill');
+            if (hudPill) hudPill.title = t.tipPill;
+
+            // Badges
+            const liveBadgeText = document.getElementById('liveBadgeText');
+            if (liveBadgeText) liveBadgeText.innerText = t.live;
+
+            // Full Mode Tags
+            const tagPower = document.getElementById('tagPower');
+            if (tagPower) tagPower.innerText = t.tagPower;
+
+            const m = cfg.rate_interval_minutes || 60;
+            const tagRate = document.getElementById('tagRate');
+            if (tagRate) tagRate.innerText = t.tagRate(m);
+
+            const tagAvgRate = document.getElementById('tagAvgRate');
+            if (tagAvgRate) tagAvgRate.innerText = t.tagAvgRate(m);
+
+            const tagSession = document.getElementById('tagSession');
+            if (tagSession) tagSession.innerText = t.tagSession;
+
+            // Mini Mode Tags
+            const miniTagPower = document.getElementById('miniTagPower');
+            if (miniTagPower) miniTagPower.innerText = t.miniTagPower;
+
+            const miniTagSpent = document.getElementById('miniTagSpent');
+            if (miniTagSpent) miniTagSpent.innerText = t.miniTagSpent;
+
+            // Re-render cached telemetry values immediately to refresh currency format unit (/hr, /ч, /h)
+            if (lastMetrics) {
+                renderTelemetry(lastMetrics);
+            }
+        }
+
+        function applyMetricsVisibility(cfg) {
+            document.getElementById('colWatts').style.display = (cfg.hud_show_power !== false) ? 'flex' : 'none';
+            document.getElementById('colRate').style.display = (cfg.hud_show_rate !== false) ? 'flex' : 'none';
+            document.getElementById('colAvgRate').style.display = (cfg.hud_show_avg === true) ? 'flex' : 'none';
+            document.getElementById('colSpent').style.display = (cfg.hud_show_session !== false) ? 'flex' : 'none';
+
+            applyMode(cfg.hud_mode || 'normal');
+        }
+
+        // Initialize Config
+        window.api.getConfig().then(cfg => {
+            currentConfig = cfg;
+            currentSymbol = cfg.currency_symbol || '$';
+            applyMetricsVisibility(cfg);
+            applyHudLanguage(cfg);
+        });
+
+        if (window.api.onConfigChanged) {
+            window.api.onConfigChanged(cfg => {
+                currentConfig = cfg;
+                currentSymbol = cfg.currency_symbol || '$';
+                applyMetricsVisibility(cfg);
+                applyHudLanguage(cfg);
+            });
+        }
+
+        // Mode Switching
+        document.getElementById('btnToggleMode').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.api.toggleHudMode();
+        });
+
+        document.getElementById('btnExpandMode').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.api.toggleHudMode();
+        });
+
+        // Double click anywhere on pill to open dashboard
+        document.getElementById('hudPill').addEventListener('dblclick', () => {
+            window.api.toggleDashboard();
+        });
+
+        // Click Details button
+        document.getElementById('btnDetails').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.api.toggleDashboard();
+        });
+
+        document.getElementById('btnMiniDetails').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.api.toggleDashboard();
+        });
+
+        // Number animation state map
+        const activeAnim = new Map();
+
+        function setAnimatedVal(el, targetVal, formatter) {
+            if (!el) return;
+            const isSmooth = !!currentConfig.smooth_numbers;
+            if (!isSmooth) {
+                if (activeAnim.has(el)) {
+                    cancelAnimationFrame(activeAnim.get(el).rafId);
+                    activeAnim.delete(el);
+                }
+                el.dataset.val = targetVal;
+                el.innerText = formatter(targetVal);
+                return;
+            }
+
+            const current = parseFloat(el.dataset.val);
+            if (isNaN(current)) {
+                el.dataset.val = targetVal;
+                el.innerText = formatter(targetVal);
+                return;
+            }
+
+            if (Math.abs(current - targetVal) < 0.001) {
+                el.innerText = formatter(targetVal);
+                return;
+            }
+
+            if (activeAnim.has(el)) {
+                cancelAnimationFrame(activeAnim.get(el).rafId);
+            }
+
+            const startTime = performance.now();
+            const duration = 260; // 260ms smooth swift interpolation
+
+            function frame(now) {
+                const elapsed = now - startTime;
+                const p = Math.min(1, elapsed / duration);
+                const ease = 1 - (1 - p) * (1 - p); // easeOutQuad
+                const v = current + (targetVal - current) * ease;
+                el.innerText = formatter(v);
+
+                if (p < 1) {
+                    const rafId = requestAnimationFrame(frame);
+                    activeAnim.set(el, { rafId, v });
+                } else {
+                    el.dataset.val = targetVal;
+                    el.innerText = formatter(targetVal);
+                    activeAnim.delete(el);
+                }
+            }
+
+            const rafId = requestAnimationFrame(frame);
+            activeAnim.set(el, { rafId, v: current });
+        }
+
+        function renderTelemetry(metrics) {
+            if (!metrics) return;
+            const watts = metrics.total_watts || 0;
+            const rateMin = metrics.rate_minutes || currentConfig.rate_interval_minutes || 60;
+            const rateVal = metrics.rate_cost ?? metrics.cost_per_hour ?? 0;
+            const avgRateVal = metrics.rate_avg_cost ?? metrics.avg_cost_per_hour ?? 0;
+
+            // Full Mode
+            const elWatts = document.getElementById('valWatts');
+            setAnimatedVal(elWatts, watts, (w) => (w >= 100 ? Math.round(w) : w.toFixed(1)) + ' W');
+
+            if (watts > 400) {
+                elWatts.style.color = '#F87171';
+            } else if (watts > 250) {
+                elWatts.style.color = '#FBBF24';
+            } else {
+                elWatts.style.color = '#10B981';
+            }
+
+            const elRate = document.getElementById('valRate');
+            setAnimatedVal(elRate, rateVal, (v) => formatCurrency(v, currentSymbol, true, rateMin));
+
+            const elAvgRate = document.getElementById('valAvgRate');
+            setAnimatedVal(elAvgRate, avgRateVal, (v) => formatCurrency(v, currentSymbol, true, rateMin));
+
+            const elSpent = document.getElementById('valSpent');
+            setAnimatedVal(elSpent, metrics.session_cost || 0, (v) => formatCurrency(v, currentSymbol, false));
+
+            const pct = Math.min(100, Math.round((watts / 500) * 100));
+            document.getElementById('valBar').style.width = pct + '%';
+
+            // Mini Cube Mode (Large & Crisp Readability)
+            const miniWatts = document.getElementById('miniWatts');
+            setAnimatedVal(miniWatts, watts, (w) => (w >= 100 ? Math.round(w) : w.toFixed(1)) + 'W');
+            miniWatts.style.color = elWatts.style.color;
+
+            const miniSpent = document.getElementById('miniSpent');
+            setAnimatedVal(miniSpent, metrics.session_cost || 0, (v) => formatCurrency(v, currentSymbol, false));
+
+            // Active Game Indicator in HUD
+            const gameBadge = document.getElementById('gameBadge');
+            const gameBadgeText = document.getElementById('gameBadgeText');
+            if (metrics.active_game && metrics.active_game.is_active) {
+                const g = metrics.active_game;
+                const lang = currentConfig.language || 'en';
+                const t = HUD_I18N[lang] || HUD_I18N.en;
+                if (gameBadge && gameBadgeText) {
+                    gameBadge.style.display = 'inline-flex';
+                    gameBadgeText.innerText = g.name.length > 13 ? g.name.slice(0, 12) + '…' : g.name;
+                    gameBadge.title = t.tipGameBadge(g.name, formatCurrency(g.cost, currentSymbol, false));
+                }
+            } else if (gameBadge) {
+                gameBadge.style.display = 'none';
+            }
+        }
+
+        // Live Telemetry Stream
+        window.api.onTelemetry((metrics) => {
+            lastMetrics = metrics;
+            renderTelemetry(metrics);
+        });
+
+        // Click-Through Toast Notification
+        let toastTimeout = null;
+        if (window.api.onClickThroughToggled) {
+            window.api.onClickThroughToggled((isEnabled) => {
+                const toast = document.getElementById('clickThroughToast');
+                if (!toast) return;
+                if (toastTimeout) clearTimeout(toastTimeout);
+                const lang = currentConfig.language || 'en';
+                const t = HUD_I18N[lang] || HUD_I18N.en;
+                toast.style.display = 'flex';
+                toast.innerText = isEnabled ? t.toastClickThroughOn : t.toastClickThroughOff;
+                toast.style.color = isEnabled ? '#38BDF8' : '#10B981';
+                toastTimeout = setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 1800);
+            });
+        }
+    </script>
+</body>
+</html>

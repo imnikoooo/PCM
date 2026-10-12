@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Cost Monitor - Setup</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #E6EDF3;
+        }
+
+        .drag-region {
+            -webkit-app-region: drag;
+        }
+
+        .no-drag {
+            -webkit-app-region: no-drag;
+        }
+
+        /* Clean Container — No clipped outer shadows */
+        .onboard-card {
+            width: 100%;
+            height: 100%;
+            background: #0D1117;
+            border: 1px solid #30363D;
+            border-radius: 12px;
+            box-shadow: none;
+            padding: 20px 22px 16px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #10B981;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .top-right-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-switch-btn {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 6px;
+            padding: 3px 8px;
+            color: #C9D1D9;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .lang-switch-btn:hover {
+            border-color: #58A6FF;
+            color: #FFFFFF;
+        }
+
+        .step-pill {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8B949E;
+            background: #161B22;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #30363D;
+        }
+
+        /* Headings */
+        .main-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #F0F6FC;
+            margin: 10px 0 2px 0;
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #8B949E;
+            line-height: 1.4;
+            margin: 0 0 6px 0;
+        }
+
+        /* Elegant, minimal author links */
+        .author-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #6E7681;
+            margin: 0 0 14px 0;
+        }
+
+        .author-row a {
+            color: #58A6FF;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        .author-row a:hover {
+            color: #79C0FF;
+            text-decoration: underline;
+        }
+
+        /* Progress Bar */
+        .progress-track {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .progress-bar-seg {
+            height: 3px;
+            flex: 1;
+            border-radius: 3px;
+            background: #21262D;
+            transition: all 0.25s ease;
+        }
+
+        .progress-bar-seg.active {
+            background: #10B981;
+        }
+
+        /* Step Content Area */
+        .step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .question-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #F0F6FC;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .question-desc {
+            font-size: 11px;
+            color: #8B949E;
+            margin-bottom: 8px;
+            line-height: 1.35;
+        }
+
+        /* Choice Cards Grid */
+        .choice-cards-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .choice-card {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .choice-card:hover {
+            border-color: #484F58;
+            background: #1C2128;
+        }
+
+        .choice-card.selected {
+            background: #0E241E;
+            border-color: #10B981;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-check {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1px solid #484F58;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: transparent;
+            transition: all 0.15s ease;
+        }
+
+        .choice-card.selected .card-check {
+            border-color: #10B981;
+            background: #10B981;
+            color: #042F2E;
+            font-weight: 800;
+        }
+
+        .card-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #F0F6FC;
+        }
+
+        .card-badge {
+            display: inline-block;
+            background: #21262D;
+            border: 1px solid #30363D;
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: #10B981;
+            width: fit-content;
+        }
+
+        .card-desc {
+            font-size: 11px;
+            color: #8B949E;
+            line-height: 1.35;
+        }
+
+        /* Large CPU Cooling Cards */
+        .cooling-card {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cooling-card:hover {
+            border-color: #484F58;
+            background: #1C2128;
+        }
+
+        .cooling-card.selected {
+            background: #0E241E;
+            border-color: #10B981;
+        }
+
+        .cooling-card.selected .card-check {
+            border-color: #10B981;
+            background: #10B981;
+            color: #042F2E;
+            font-weight: 800;
+        }
+
+        .cooling-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #21262D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #10B981;
+            flex-shrink: 0;
+        }
+
+        .cooling-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .cooling-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #F0F6FC;
+        }
+
+        .cooling-desc {
+            font-size: 11px;
+            color: #8B949E;
+            line-height: 1.35;
+        }
+
+        /* Form Controls */
+        .select-styled {
+            width: 100%;
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            color: #F0F6FC;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 12px;
+            outline: none;
+            transition: border-color 0.15s ease;
+            cursor: pointer;
+        }
+
+        .select-styled:focus {
+            border-color: #58A6FF;
+        }
+
+        .info-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #8B949E;
+            margin-top: 6px;
+        }
+
+        .tip-box {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 11px;
+            color: #8B949E;
+            line-height: 1.4;
+            margin-top: auto;
+        }
+
+        .tip-box strong {
+            color: #F0F6FC;
+        }
+
+        /* Action Buttons */
+        .bottom-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .btn-continue {
+            flex: 1;
+            height: 38px;
+            background: #10B981;
+            border: none;
+            border-radius: 8px;
+            color: #042F2E;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .btn-continue:hover {
+            background: #059669;
+        }
+
+        .btn-continue:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-back {
+            height: 38px;
+            padding: 0 16px;
+            background: #21262D;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            color: #C9D1D9;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-back:hover {
+            background: #30363D;
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="onboard-card drag-region">
+        <div>
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="app-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    Power Cost Monitor
+                </div>
+                <div class="top-right-group no-drag">
+                    <button type="button" class="lang-switch-btn" id="langSwitchBtn" onclick="toggleLanguage()">
+                        <span id="langSwitchLabel">EN / RU</span>
+                    </button>
+                    <div class="step-pill" id="stepPill">Step 1 of 3</div>
+                </div>
+            </div>
+
+            <h1 class="main-title" id="welcomeTitle">Welcome</h1>
+            <p class="subtitle" id="stepSubtitle">Configure your monitoring preferences in 3 quick steps.</p>
+
+            <!-- Minimal Author Byline -->
+            <div class="author-row no-drag">
+                <span id="authorCreatedLabel">Crafted by notniko</span>
+                <span>•</span>
+                <a href="#" onclick="openExternalUrl('https://notniko.com'); return false;">notniko.com</a>
+                <span>•</span>
+                <a href="#" onclick="openExternalUrl('https://github.com/imnikoooo/PCM'); return false;">GitHub</a>
+            </div>
+
+            <!-- Progress Segments -->
+            <div class="progress-track">
+                <div class="progress-bar-seg active" id="progSeg1"></div>
+                <div class="progress-bar-seg" id="progSeg2"></div>
+                <div class="progress-bar-seg" id="progSeg3"></div>
+            </div>
+        </div>
+
+        <!-- STEP 1: HUD Mode Selection -->
+        <div class="step-container" id="step1Container">
+            <div>
+                <label class="question-label" id="labelStep1HudMode">Choose your in-game HUD overlay style:</label>
+                <div class="question-desc" id="descStep1HudMode">
+                    Toggle anytime with <strong style="color: #58A6FF;">Ctrl+Shift+M</strong>. Click-through with <strong style="color: #58A6FF;">Ctrl+Shift+X</strong>.
+                </div>
+
+                <div class="choice-cards-row">
+                    <!-- Option 1: Standard Pill -->
+                    <div class="choice-card no-drag selected" id="cardHudNormal" onclick="selectHudMode('normal')">
+                        <div class="card-top">
+                            <span class="card-title" id="titleHudNormal">Standard Pill</span>
+                            <div class="card-check">✓</div>
+                        </div>
+                        <div class="card-badge">245W | $0.07/hr | $0.42</div>
+                        <div class="card-desc" id="descHudNormal">
+                            Complete telemetry pill showing live Watts, hourly cost rate, and session spending.
+                        </div>
+                    </div>
+
+                    <!-- Option 2: Mini Cube -->
+                    <div class="choice-card no-drag" id="cardHudMini" onclick="selectHudMode('mini')">
+                        <div class="card-top">
+                            <span class="card-title" id="titleHudMini">Mini Cube</span>
+                            <div class="card-check">✓</div>
+                        </div>
+                        <div class="card-badge">245W • $0.42</div>
+                        <div class="card-desc" id="descHudMini">
+                            Ultra-compact 118×84px corner cube with high-contrast digits for gaming. Zero distraction.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <span id="tipDirectX"><strong>Fullscreen Tip:</strong> The HUD works on top of games. If a game (like Watch Dogs 2) hides overlays, set its graphics mode to <em>Borderless / Windowed Fullscreen</em>.</span>
+            </div>
+        </div>
+
+        <!-- STEP 2: Tariffs & Smooth Numbers -->
+        <div class="step-container" id="step2Container" style="display: none;">
+            <div>
+                <label class="question-label" for="selectRegion" id="labelWhereLive">Regional electricity tariff:</label>
+                <select class="select-styled no-drag" id="selectRegion">
+                    <option value="US_AVG">US National Average (EIA) — $0.183 / kWh</option>
+                    <option value="NYC_CONED">New York City (Con Edison) — $0.338 / kWh</option>
+                    <option value="US_CA">California (PG&E / SCE) — $0.336 / kWh</option>
+                    <option value="NYC_STATEN">New York (Staten Island) — $0.220 / kWh</option>
+                    <option value="US_TX">Texas (ERCOT Average) — $0.159 / kWh</option>
+                    <option value="US_FL">Florida — $0.150 / kWh</option>
+                    <option value="US_WA">Washington State — $0.115 / kWh</option>
+                    <option value="US_HI">Hawaii — $0.440 / kWh</option>
+                    <option value="ES_MAD">Spain (Madrid / PVPC Regulado) — 0.198 € / kWh</option>
+                    <option value="UK_LON">United Kingdom (Ofgem Cap) — £0.265 / kWh</option>
+                    <option value="EU_GER">European Union / Germany — €0.395 / kWh</option>
+                    <option value="RU_MSK">Moscow (Mosenergosbyt) — 6.50 ₽ / kWh</option>
+                    <option value="RU_REG">Russian Regions (Average) — 2.20 ₽ / kWh</option>
+                    <option value="KZ_ALM">Kazakhstan (Almaty/Astana) — 28.00 ₸ / kWh</option>
+                    <option value="CUSTOM">Custom Currency & Tariff...</option>
+                </select>
+
+                <div class="info-pill" id="tariffInfoPill">
+                    <span id="pillTariffLabel">Rate: <strong style="color: #10B981;" id="pillTariffText">$0.183</strong> per 1 kWh</span>
+                    <span style="font-weight: 600; color: #8B949E;" id="pillCurrencyText">Currency: $</span>
+                </div>
+
+                <div id="customRegionRow" style="display: none; grid-template-columns: 80px 1fr; gap: 8px; margin-top: 8px;">
+                    <input type="text" class="select-styled no-drag" id="customCurrency" placeholder="$" value="$" style="text-align: center;">
+                    <input type="number" step="0.001" class="select-styled no-drag" id="customTariff" placeholder="Tariff per kWh" value="0.28">
+                </div>
+            </div>
+
+            <div style="margin-top: 4px;">
+                <label class="question-label" id="labelSmoothAnim">Smooth numbers animation:</label>
+                <div class="question-desc" id="descSmoothAnim">Easing transition between live sensor updates</div>
+
+                <div class="choice-cards-row">
+                    <div class="choice-card no-drag selected" id="cardSmoothOn" onclick="selectSmooth(true)">
+                        <div class="card-top">
+                            <span class="card-title" id="titleSmoothOn">Enabled</span>
+                            <div class="card-check">✓</div>
+                        </div>
+                        <div class="card-desc" id="descSmoothOn">Smooth easing between power numbers</div>
+                    </div>
+
+                    <div class="choice-card no-drag" id="cardSmoothOff" onclick="selectSmooth(false)">
+                        <div class="card-top">
+                            <span class="card-title" id="titleSmoothOff">Instant</span>
+                            <div class="card-check">✓</div>
+                        </div>
+                        <div class="card-desc" id="descSmoothOff">Direct raw sensor readings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: CPU Cooling Type -->
+        <div class="step-container" id="step3Container" style="display: none;">
+            <div>
+                <label class="question-label" id="labelCoolingQuestion">Select your CPU cooling system:</label>
+                <div class="question-desc" id="descCoolingSub">Used to calculate cooler pump and fan power draw</div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="cooling-card no-drag selected" id="cardCoolingAio" onclick="selectCooling('aio')">
+                        <div class="cooling-icon-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                        </div>
+                        <div class="cooling-text">
+                            <div class="cooling-title" id="titleCoolingAio">AIO Liquid Cooler with Pump</div>
+                            <div class="cooling-desc" id="descCoolingAio">Continuous liquid pump and 2–3 radiator fans (~10–12 W)</div>
+                        </div>
+                        <div class="card-check">✓</div>
+                    </div>
+
+                    <div class="cooling-card no-drag" id="cardCoolingAir" onclick="selectCooling('air')">
+                        <div class="cooling-icon-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                        </div>
+                        <div class="cooling-text">
+                            <div class="cooling-title" id="titleCoolingAir">Air Tower Heatsink Cooler</div>
+                            <div class="cooling-desc" id="descCoolingAir">Traditional air heatsink with 1–2 PWM fans (~3–4 W)</div>
+                        </div>
+                        <div class="card-check">✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong style="color: #10B981;" id="labelAutoDetectTitle">Hardware Auto-Detection Ready:</strong>
+                <span id="labelAutoDetectBody">Your GPU, CPU TDP, display refresh rate, RAM, and SSD storage will be detected automatically when you launch.</span>
+            </div>
+        </div>
+
+        <!-- Footer / Navigation -->
+        <div>
+            <!-- Step 1 Actions -->
+            <div class="bottom-actions" id="step1Actions">
+                <button class="btn-continue no-drag" id="btnContinue1" onclick="goToStep2()">
+                    <span id="btnContinueLabel1">Continue</span>
+                    <span>→</span>
+                </button>
+            </div>
+
+            <!-- Step 2 Actions -->
+            <div class="bottom-actions" id="step2Actions" style="display: none;">
+                <button class="btn-back no-drag" onclick="goToStep1()" id="btnBack2">
+                    Back
+                </button>
+                <button class="btn-continue no-drag" id="btnContinue2" onclick="goToStep3()">
+                    <span id="btnContinueLabel2">Continue</span>
+                    <span>→</span>
+                </button>
+            </div>
+
+            <!-- Step 3 Actions -->
+            <div class="bottom-actions" id="step3Actions" style="display: none;">
+                <button class="btn-back no-drag" onclick="goToStep2()" id="btnBack3">
+                    Back
+                </button>
+                <button class="btn-continue no-drag" id="btnFinish" onclick="finishOnboarding()">
+                    <span id="btnFinishLabel">Start Monitoring</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const regionTariffs = {
+            US_AVG: { sym: '$', tariff: 0.183, label: '$0.183' },
+            NYC_CONED: { sym: '$', tariff: 0.338, label: '$0.338' },
+            US_CA: { sym: '$', tariff: 0.336, label: '$0.336' },
+            NYC_STATEN: { sym: '$', tariff: 0.220, label: '$0.220' },
+            US_TX: { sym: '$', tariff: 0.159, label: '$0.159' },
+            US_FL: { sym: '$', tariff: 0.150, label: '$0.150' },
+            US_WA: { sym: '$', tariff: 0.115, label: '$0.115' },
+            US_HI: { sym: '$', tariff: 0.440, label: '$0.440' },
+            ES_MAD: { sym: '€', tariff: 0.198, label: '0.198 €' },
+            UK_LON: { sym: '£', tariff: 0.265, label: '0.265 £' },
+            EU_GER: { sym: '€', tariff: 0.395, label: '0.395 €' },
+            RU_MSK: { sym: '₽', tariff: 6.50, label: '6.50 ₽' },
+            RU_REG: { sym: '₽', tariff: 2.20, label: '2.20 ₽' },
+            KZ_ALM: { sym: '₸', tariff: 28.00, label: '28.00 ₸' }
+        };
+
+        let currentLang = 'en';
+        let selectedHudMode = 'normal';
+        let selectedSmooth = true;
+        let selectedCooling = 'aio';
+
+        const selectRegion = document.getElementById('selectRegion');
+        const pillTariffText = document.getElementById('pillTariffText');
+        const pillCurrencyText = document.getElementById('pillCurrencyText');
+        const customRegionRow = document.getElementById('customRegionRow');
+        const customCurrency = document.getElementById('customCurrency');
+        const customTariff = document.getElementById('customTariff');
+
+        const I18N = {
+            en: {
+                langLabel: '🌐 EN',
+                step1Pill: 'Step 1 of 3',
+                step2Pill: 'Step 2 of 3',
+                step3Pill: 'Step 3 of 3',
+                welcomeTitle: 'Welcome!',
+                subStep1: 'Configure your monitoring preferences in 3 quick steps.',
+                subStep2: 'Select your local region tariff and whether you want smooth animation on numbers.',
+                subStep3: 'Choose your processor cooling type for exact pump and fan wattage calculations.',
+                authorCreated: 'Crafted by notniko',
+                step1HudMode: 'Choose your in-game HUD overlay style:',
+                descStep1HudMode: 'Toggle anytime with <strong style="color: #58A6FF;">Ctrl+Shift+M</strong>. Click-through with <strong style="color: #58A6FF;">Ctrl+Shift+X</strong>.',
+                titleHudNormal: 'Standard Pill',
+                descHudNormal: 'Complete telemetry pill showing live Watts, hourly cost rate, and session spending.',
+                titleHudMini: 'Mini Cube',
+                descHudMini: 'Ultra-compact 118×84px corner cube with high-contrast digits for gaming. Zero distraction.',
+                tipDirectX: '<strong>Fullscreen Tip:</strong> The HUD works on top of games. If a game (like Watch Dogs 2) hides overlays, set its graphics mode to <em>Borderless / Windowed Fullscreen</em>.',
+                whereLive: 'Regional electricity tariff:',
+                pillTariffLabel: 'Rate: ',
+                pillCurrencyLabel: 'Currency: ',
+                smoothAnim: 'Smooth numbers animation:',
+                descSmoothAnim: 'Easing transition between live sensor updates',
+                titleSmoothOn: 'Enabled',
+                descSmoothOn: 'Smooth easing between power numbers',
+                titleSmoothOff: 'Instant',
+                descSmoothOff: 'Direct raw sensor readings',
+                coolingQuestion: 'Select your CPU cooling system:',
+                descCoolingSub: 'Used to calculate cooler pump and fan power draw',
+                titleCoolingAio: 'AIO Liquid Cooler with Pump',
+                descCoolingAio: 'Continuous liquid pump and 2–3 radiator fans (~10–12 W)',
+                titleCoolingAir: 'Air Tower Heatsink Cooler',
+                descCoolingAir: 'Traditional air heatsink with 1–2 PWM fans (~3–4 W)',
+                autoDetectTitle: 'Hardware Auto-Detection Ready:',
+                autoDetectBody: 'Your GPU, CPU TDP, display refresh rate, RAM, and SSD storage will be detected automatically when you launch.',
+                btnContinue: 'Continue',
+                btnBack: 'Back',
+                btnFinish: 'Start Monitoring',
+                btnLaunching: 'Starting...'
+            },
+            ru: {
+                langLabel: '🌐 RU',
+                step1Pill: 'Шаг 1 из 3',
+                step2Pill: 'Шаг 2 из 3',
+                step3Pill: 'Шаг 3 из 3',
+                welcomeTitle: 'Добро пожаловать!',
+                subStep1: 'Настройте мониторинг ПК всего за 3 простых шага.',
+                subStep2: 'Выберите региональный тариф электроэнергии и плавность анимации цифр.',
+                subStep3: 'Укажите тип процессорного охлаждения для точного расчёта мощности кулеров.',
+                authorCreated: 'Разработано notniko',
+                step1HudMode: 'Выберите стиль игрового оверлея (HUD):',
+                descStep1HudMode: 'Переключение в любой момент: <strong style="color: #58A6FF;">Ctrl+Shift+M</strong>. Сквозные клики: <strong style="color: #58A6FF;">Ctrl+Shift+X</strong>.',
+                titleHudNormal: 'Обычный виджет',
+                descHudNormal: 'Полная панель: текущие Ватты, расход в час и сумма за текущую сессию.',
+                titleHudMini: 'Мини-кубик',
+                descHudMini: 'Компактный кубик 118×84px с крупными контрастными цифрами для игр.',
+                tipDirectX: '<strong>Совет для игр:</strong> Если игра (например, Watch Dogs 2) перекрывает оверлей, переключите её в режим <em>«В окне без рамки» (Borderless)</em>.',
+                whereLive: 'Региональный тариф на электроэнергию:',
+                pillTariffLabel: 'Тариф: ',
+                pillCurrencyLabel: 'Валюта: ',
+                smoothAnim: 'Плавная анимация цифр:',
+                descSmoothAnim: 'Плавный переход между показаниями датчиков',
+                titleSmoothOn: 'Включена',
+                descSmoothOn: 'Плавная интерполяция значений',
+                titleSmoothOff: 'Выключена',
+                descSmoothOff: 'Мгновенное обновление чисел',
+                coolingQuestion: 'Тип процессорного охлаждения:',
+                descCoolingSub: 'Необходим для расчёта помпы и вентиляторов',
+                titleCoolingAio: 'СЖО / Водянка AIO с помпой',
+                descCoolingAio: 'Помпа и 2–3 вентилятора на радиаторе (~10–12 Вт)',
+                titleCoolingAir: 'Воздушный башенный кулер',
+                descCoolingAir: 'Классический радиатор с 1–2 вентиляторами (~3–4 Вт)',
+                autoDetectTitle: 'Автоопределение характеристик готово:',
+                autoDetectBody: 'Видеокарта, процессор, герцовка экрана, ОЗУ и диски определятся автоматически при старте.',
+                btnContinue: 'Продолжить',
+                btnBack: 'Назад',
+                btnFinish: 'Запустить мониторинг',
+                btnLaunching: 'Запуск...'
+            },
+            es: {
+                langLabel: '🌐 ES',
+                step1Pill: 'Paso 1 de 3',
+                step2Pill: 'Paso 2 de 3',
+                step3Pill: 'Paso 3 de 3',
+                welcomeTitle: '¡Bienvenido!',
+                subStep1: 'Configura tus preferencias de monitorización en 3 sencillos pasos.',
+                subStep2: 'Selecciona la tarifa de tu región y si deseas animación suave en los números.',
+                subStep3: 'Elige el tipo de refrigeración del procesador para calcular el consumo exacto.',
+                authorCreated: 'Desarrollado por notniko',
+                step1HudMode: 'Elige el estilo del widget HUD para juegos:',
+                descStep1HudMode: 'Cambia de modo en cualquier momento con <strong style="color: #58A6FF;">Ctrl+Shift+M</strong>. Clics transparentes con <strong style="color: #58A6FF;">Ctrl+Shift+X</strong>.',
+                titleHudNormal: 'Cápsula Estándar',
+                descHudNormal: 'Panel completo que muestra vatios en tiempo real, coste por hora y gasto de la sesión.',
+                titleHudMini: 'Mini Cubo',
+                descHudMini: 'Cubo ultracompacto de 118×84px con dígitos de alto contraste para jugar. Cero distracciones.',
+                tipDirectX: '<strong>Consejo para juegos:</strong> El HUD funciona sobre los juegos. Si un juego (como Watch Dogs 2) oculta el HUD, cambia su modo gráfico a <em>Sin bordes / Ventana completa</em>.',
+                whereLive: 'Tarifa eléctrica regional:',
+                pillTariffLabel: 'Tarifa: ',
+                pillCurrencyLabel: 'Divisa: ',
+                smoothAnim: 'Animación suave de números:',
+                descSmoothAnim: 'Transición fluida entre las actualizaciones de los sensores',
+                titleSmoothOn: 'Activada',
+                descSmoothOn: 'Interpolación suave entre números de potencia',
+                titleSmoothOff: 'Instantánea',
+                descSmoothOff: 'Lectura directa e inmediata de sensores',
+                coolingQuestion: 'Selecciona el sistema de refrigeración de la CPU:',
+                descCoolingSub: 'Se utiliza para calcular el consumo de la bomba y los ventiladores',
+                titleCoolingAio: 'Refrigeración líquida AIO con bomba',
+                descCoolingAio: 'Bomba de líquido continua y 2–3 ventiladores de radiador (~10–12 W)',
+                titleCoolingAir: 'Disipador de torre por aire',
+                descCoolingAir: 'Disipador tradicional con 1–2 ventiladores PWM (~3–4 W)',
+                autoDetectTitle: 'Detección automática de hardware lista:',
+                autoDetectBody: 'Tu GPU, TDP de la CPU, frecuencia del monitor, RAM y almacenamiento SSD se detectarán automáticamente al iniciar.',
+                btnContinue: 'Continuar',
+                btnBack: 'Atrás',
+                btnFinish: 'Iniciar monitorización',
+                btnLaunching: 'Iniciando...'
+            }
+        };
+
+        function applyLanguage(lang) {
+            currentLang = lang;
+            const t = I18N[lang] || I18N.en;
+
+            document.getElementById('langSwitchLabel').innerText = t.langLabel;
+            document.getElementById('welcomeTitle').innerText = t.welcomeTitle;
+            document.getElementById('authorCreatedLabel').innerText = t.authorCreated;
+
+            // Step 1
+            document.getElementById('labelStep1HudMode').innerText = t.step1HudMode;
+            document.getElementById('descStep1HudMode').innerHTML = t.descStep1HudMode;
+            document.getElementById('titleHudNormal').innerText = t.titleHudNormal;
+            document.getElementById('descHudNormal').innerText = t.descHudNormal;
+            document.getElementById('titleHudMini').innerText = t.titleHudMini;
+            document.getElementById('descHudMini').innerText = t.descHudMini;
+            document.getElementById('tipDirectX').innerHTML = t.tipDirectX;
+            document.getElementById('btnContinueLabel1').innerText = t.btnContinue;
+
+            // Step 2
+            document.getElementById('labelWhereLive').innerText = t.whereLive;
+            document.getElementById('labelSmoothAnim').innerText = t.smoothAnim;
+            document.getElementById('descSmoothAnim').innerText = t.descSmoothAnim;
+            document.getElementById('titleSmoothOn').innerText = t.titleSmoothOn;
+            document.getElementById('descSmoothOn').innerText = t.descSmoothOn;
+            document.getElementById('titleSmoothOff').innerText = t.titleSmoothOff;
+            document.getElementById('descSmoothOff').innerText = t.descSmoothOff;
+            document.getElementById('btnBack2').innerText = t.btnBack;
+            document.getElementById('btnContinueLabel2').innerText = t.btnContinue;
+
+            // Step 3
+            document.getElementById('labelCoolingQuestion').innerText = t.coolingQuestion;
+            document.getElementById('descCoolingSub').innerText = t.descCoolingSub;
+            document.getElementById('titleCoolingAio').innerText = t.titleCoolingAio;
+            document.getElementById('descCoolingAio').innerText = t.descCoolingAio;
+            document.getElementById('titleCoolingAir').innerText = t.titleCoolingAir;
+            document.getElementById('descCoolingAir').innerText = t.descCoolingAir;
+            document.getElementById('labelAutoDetectTitle').innerText = t.autoDetectTitle;
+            document.getElementById('labelAutoDetectBody').innerText = t.autoDetectBody;
+            document.getElementById('btnBack3').innerText = t.btnBack;
+            document.getElementById('btnFinishLabel').innerText = t.btnFinish;
+
+            updateRegionPill();
+        }
+
+        window.toggleLanguage = function() {
+            let nextLang = 'en';
+            if (currentLang === 'en') nextLang = 'ru';
+            else if (currentLang === 'ru') nextLang = 'es';
+            else nextLang = 'en';
+            applyLanguage(nextLang);
+        };
+
+        window.openExternalUrl = function(url) {
+            if (window.api && window.api.openExternal) {
+                window.api.openExternal(url);
+            }
+        };
+
+        function updateRegionPill() {
+            const val = selectRegion.value;
+            const t = I18N[currentLang] || I18N.en;
+
+            if (val === 'CUSTOM') {
+                customRegionRow.style.display = 'grid';
+                pillTariffText.innerText = `${customTariff.value} ${customCurrency.value}`;
+                pillCurrencyText.innerText = `${t.pillCurrencyLabel}${customCurrency.value}`;
+            } else {
+                customRegionRow.style.display = 'none';
+                const p = regionTariffs[val] || regionTariffs.US_AVG;
+                pillTariffText.innerText = p.label;
+                pillCurrencyText.innerText = `${t.pillCurrencyLabel}${p.sym}`;
+            }
+        }
+
+        selectRegion.addEventListener('change', updateRegionPill);
+        customCurrency.addEventListener('input', updateRegionPill);
+        customTariff.addEventListener('input', updateRegionPill);
+
+        window.selectHudMode = function(mode) {
+            selectedHudMode = mode;
+            const cardNormal = document.getElementById('cardHudNormal');
+            const cardMini = document.getElementById('cardHudMini');
+            if (mode === 'normal') {
+                cardNormal.classList.add('selected');
+                cardMini.classList.remove('selected');
+            } else {
+                cardMini.classList.add('selected');
+                cardNormal.classList.remove('selected');
+            }
+        };
+
+        window.selectSmooth = function(val) {
+            selectedSmooth = val;
+            const onCard = document.getElementById('cardSmoothOn');
+            const offCard = document.getElementById('cardSmoothOff');
+            if (val) {
+                onCard.classList.add('selected');
+                offCard.classList.remove('selected');
+            } else {
+                offCard.classList.add('selected');
+                onCard.classList.remove('selected');
+            }
+        };
+
+        window.selectCooling = function(type) {
+            selectedCooling = type;
+            const aioCard = document.getElementById('cardCoolingAio');
+            const airCard = document.getElementById('cardCoolingAir');
+            if (type === 'aio') {
+                aioCard.classList.add('selected');
+                airCard.classList.remove('selected');
+            } else {
+                airCard.classList.add('selected');
+                aioCard.classList.remove('selected');
+            }
+        };
+
+        window.goToStep1 = function() {
+            document.getElementById('step2Container').style.display = 'none';
+            document.getElementById('step3Container').style.display = 'none';
+            document.getElementById('step2Actions').style.display = 'none';
+            document.getElementById('step3Actions').style.display = 'none';
+
+            document.getElementById('step1Container').style.display = 'flex';
+            document.getElementById('step1Actions').style.display = 'flex';
+
+            const t = I18N[currentLang] || I18N.en;
+            document.getElementById('stepPill').innerText = t.step1Pill;
+            document.getElementById('stepSubtitle').innerText = t.subStep1;
+
+            document.getElementById('progSeg1').classList.add('active');
+            document.getElementById('progSeg2').classList.remove('active');
+            document.getElementById('progSeg3').classList.remove('active');
+        };
+
+        window.goToStep2 = function() {
+            document.getElementById('step1Container').style.display = 'none';
+            document.getElementById('step3Container').style.display = 'none';
+            document.getElementById('step1Actions').style.display = 'none';
+            document.getElementById('step3Actions').style.display = 'none';
+
+            document.getElementById('step2Container').style.display = 'flex';
+            document.getElementById('step2Actions').style.display = 'flex';
+
+            const t = I18N[currentLang] || I18N.en;
+            document.getElementById('stepPill').innerText = t.step2Pill;
+            document.getElementById('stepSubtitle').innerText = t.subStep2;
+
+            document.getElementById('progSeg1').classList.remove('active');
+            document.getElementById('progSeg2').classList.add('active');
+            document.getElementById('progSeg3').classList.remove('active');
+        };
+
+        window.goToStep3 = function() {
+            document.getElementById('step1Container').style.display = 'none';
+            document.getElementById('step2Container').style.display = 'none';
+            document.getElementById('step1Actions').style.display = 'none';
+            document.getElementById('step2Actions').style.display = 'none';
+
+            document.getElementById('step3Container').style.display = 'flex';
+            document.getElementById('step3Actions').style.display = 'flex';
+
+            const t = I18N[currentLang] || I18N.en;
+            document.getElementById('stepPill').innerText = t.step3Pill;
+            document.getElementById('stepSubtitle').innerText = t.subStep3;
+
+            document.getElementById('progSeg1').classList.remove('active');
+            document.getElementById('progSeg2').classList.remove('active');
+            document.getElementById('progSeg3').classList.add('active');
+        };
+
+        window.finishOnboarding = function() {
+            const btnFinish = document.getElementById('btnFinish');
+            btnFinish.disabled = true;
+            const t = I18N[currentLang] || I18N.en;
+            btnFinish.innerHTML = `<span>${t.btnLaunching}</span>`;
+
+            let cur = '$';
+            let tar = 0.183;
+            const rVal = selectRegion.value;
+            if (rVal === 'CUSTOM') {
+                cur = customCurrency.value.trim() || '$';
+                tar = parseFloat(customTariff.value) || 0.28;
+            } else if (regionTariffs[rVal]) {
+                cur = regionTariffs[rVal].sym;
+                tar = regionTariffs[rVal].tariff;
+            }
+
+            const answers = {
+                language: currentLang,
+                hud_mode: selectedHudMode,
+                currency_symbol: cur,
+                tariff_per_kwh: tar,
+                smooth_numbers: selectedSmooth,
+                cooling_type: selectedCooling
+            };
+
+            setTimeout(() => {
+                if (window.api && window.api.completeOnboarding) {
+                    window.api.completeOnboarding(answers);
+                }
+            }, 250);
+        };
+
+        applyLanguage('en');
+    </script>
+</body>
+</html>
