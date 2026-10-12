@@ -19,6 +19,7 @@
   <a href="https://github.com/imnikoooo/PCM/releases">Download Latest Installer</a>
 </p>
 
+💡 Notice for Windows SmartScreen: Because Power Cost Monitor is a free open-source project without a costly corporate certificate ($400+/year), Windows SmartScreen may show a warning on first launch. Simply click "More info" ➔ "Run anyway". All source code is 100% transparent, open, and can be reviewed directly in this repository.
 ---
 
 ## 🌟 Why Power Cost Monitor?
