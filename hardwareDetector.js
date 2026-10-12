@@ -1,14 +1,3 @@
-/**
- * Comprehensive Hardware Auto-Detector for Power Cost Monitor.
- * Queries Windows WMI/CIM subsystem to discover:
- *  - CPU (Name, Cores, Threads, and accurate TDP profile)
- *  - GPU (Name, discrete card prioritization, VRAM, and TDP profile)
- *  - RAM (Stick count, total GB, DDR generation, speed)
- *  - Storage (NVMe/SSD drives count and mechanical HDD count)
- *  - Display (Refresh rate in Hz, resolution, and monitor size preset)
- *  - Motherboard (Manufacturer and Model)
- *  - Power Supply (Calculated optimal recommended wattage)
- */
 
 const { exec } = require('child_process');
 const path = require('path');
