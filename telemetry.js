@@ -1,15 +1,3 @@
-/**
- * High-Precision Telemetry & Electrical Physics Engine.
- * Accurately models every component affecting PC power draw:
- *  - NVIDIA GPU: Direct hardware shunt reading (Total Board Power via NVML)
- *  - CPU: Multi-core load (%) + dynamic voltage/frequency boost curve
- *  - Monitor: Scales with panel size, resolution, and Refresh Rate (60Hz -> 360Hz)
- *  - RAM: DDR4/DDR5 sticks with EXPO/XMP voltage
- *  - Storage: PCIe 4.0/5.0 NVMe SSDs & mechanical HDDs
- *  - Cooling: Case fans, AIO liquid pump, and RGB controller
- *  - Power Supply: Real non-linear 80 PLUS efficiency load curve (Bronze/Gold/Platinum/Titanium)
- *  - Session Averages: Real-time calculation of Average Watts and Average Cost/Hour
- */
 
 const { exec } = require('child_process');
 const os = require('os');
