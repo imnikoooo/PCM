@@ -1,10 +1,3 @@
-/**
- * GameTracker: Automated Game Session & Power Analytics Engine.
- * 
- * Accurately detects active 3D games (Steam, Epic, Ubisoft, Riot, Lesta, Roblox, etc.),
- * tracks gaming duration, electricity kWh consumed, exact money spent,
- * and records dedicated GPU graphics load and power draw during each gaming session.
- */
 
 const { exec } = require('child_process');
 const path = require('path');
